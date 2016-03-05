@@ -21,7 +21,7 @@ type New_Tweet_Insert struct {
 	TweetDate		time.Time			`db:"tweet_date"`
 	TweetOembed		string				`db:"tweet_oembed"`
 	Twitter_ID		string				`db:"twitter_ID"`
-	ProfileImageURL	string				`db:"profile_image"`
+	ProfileImageURL		string				`db:"profile_image"`
 }
 
 func add_new_user(u string) {
@@ -37,9 +37,9 @@ func add_new_user(u string) {
 		/*
 		*anaconda settings for the Twitter keys and secrets
 		*/
-		anaconda.SetConsumerKey("v209uvVUUfWtFHKXTrcFQ")
-		anaconda.SetConsumerSecret("AQkRQfl7k7rwt1Zbh6RbCeKHTyQwNaD7mH78Yz1g")
-		api := anaconda.NewTwitterApi("131547767-O0v9F9vnAM1YTsyWL6500oDsXQRHuSoecObwqSM", "ihNLKHTUk9010DQRMOWxISx2WrxZFLYVnXhLVj6ac")
+		anaconda.SetConsumerKey("")
+		anaconda.SetConsumerSecret("")
+		api := anaconda.NewTwitterApi("", "")
 
 		//build the Twitter query	
 		username := Tweeter
