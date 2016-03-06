@@ -2,7 +2,7 @@ package xpnk_instaUser
 
 import  "testing"
 
-func TestMain(t *testing.T) {
+func TestGetInstaUserId(t *testing.T) {
 
 	var v string
 
