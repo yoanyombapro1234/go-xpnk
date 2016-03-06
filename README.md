@@ -10,6 +10,7 @@ This project:
 * Stores the tweets from the Twitter response in the DB.
 * Creates a JSON file of the tweets for each group, using a file-naming convention, that is used by the front end (Angular and Ionic) apps.
 * Provides a REST API endpoint from which the front end retrieves the JSON files which it uses to assemble the display of the tweets.
+* Currently in the process of adding the functionality for Instagram
 
 Eventually, the Go code will send push notifications to the front end apps only when there is new content in the applicable JSON files (rather than having the front end requesting the JSON file from the server every 60 seconds). The front end code will then respond with a request to the REST API end point.
 
