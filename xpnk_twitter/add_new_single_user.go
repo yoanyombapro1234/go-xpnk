@@ -21,7 +21,7 @@ type New_Tweet_Insert struct {
 	TweetDate		time.Time			`db:"tweet_date"`
 	TweetOembed		string				`db:"tweet_oembed"`
 	Twitter_ID		string				`db:"twitter_ID"`
-	ProfileImageURL		string				`db:"profile_image"`
+	ProfileImageURL	string				`db:"profile_image"`
 }
 
 func add_new_user(u string) {
@@ -33,93 +33,92 @@ func add_new_user(u string) {
 	
     //fmt.Printf("\n==========\nTweeter:%v\n",Tweeter)
     
-		//using PERSONAL keys and secrets for development - CHANGE to KURATUR when go live
-		/*
-		*anaconda settings for the Twitter keys and secrets
-		*/
-		anaconda.SetConsumerKey("")
-		anaconda.SetConsumerSecret("")
-		api := anaconda.NewTwitterApi("", "")
+	//using PERSONAL keys and secrets for development - CHANGE to XAPNIK when go live
+	/*
+	*anaconda settings for the Twitter keys and secrets
+	*/
+	anaconda.SetConsumerKey("")
+	anaconda.SetConsumerSecret("")
+	api := anaconda.NewTwitterApi("")
 
-		//build the Twitter query	
-		username := Tweeter
-		fetchcount := ""
-		const trimuser = "true"
+	//build the Twitter query	
+	username := Tweeter
+	fetchcount := ""
+	const trimuser = "true"
+
+	v := url.Values{}
+	v.Set("from", username)
+	v.Set("count", fetchcount)
+	//v.Set("trim_user", trimuser)
+	fmt.Printf("\n==========\nVALUES: \n%+v\n",v)
+
+	usertimeline, err := api.GetSearch("",v)
+	if err != nil {
+		fmt.Printf("GetSearch returned error: %s", err.Error())
+	}
+
+	fmt.Printf("\n==========\nTIMELINE: \n%+v\n",usertimeline)
+
+	//TODO extract only the needed fields and format into Twitter oEmbed html format?
+	//1) store the single tweet data in a Tweet_Insert struct
+	//2) append the Tweet_Insert into a slice of Tweet_Inserts
 	
-		v := url.Values{}
-		v.Set("from", username)
-		v.Set("count", fetchcount)
-		//v.Set("trim_user", trimuser)
-		fmt.Printf("\n==========\nVALUES: \n%+v\n",v)
-
-		usertimeline, err := api.GetSearch("",v)
+	var New_Tweet_Inserts []New_Tweet_Insert
+	
+	for i := 0; i < len(usertimeline.Statuses); i++ {
+		//first put stuff from usertimeline into Tweet_Insert
+		//then get the oembed and put into Tweet_Insert
+		//Get the tweet ID for each tweet
+		
+		var this_tweet_insert New_Tweet_Insert
+		
+		this_tweet_insert.TwitterUser = usertimeline.Statuses[i].User.ScreenName
+		this_tweet_insert.TweetID = usertimeline.Statuses[i].IdStr
+		this_tweet_insert.Twitter_ID = usertimeline.Statuses[i].User.IdStr
+		
+		//convert Twitter's created_at time format to time.Time format
+		this_created_at := usertimeline.Statuses[i].CreatedAt
+		this_created_date, _ := time.Parse(time.RubyDate,this_created_at)
+		
+		this_tweet_insert.TweetDate = this_created_date
+					
+		//remove '_normal' from end of profile image filename to get full-size avatar
+		r := strings.NewReplacer("_normal", "")
+		p := usertimeline.Statuses[i].User.ProfileImageURL
+		avatar := r.Replace(p)
+		
+		this_tweet_insert.ProfileImageURL = avatar
+		
+		getoembed := usertimeline.Statuses[i].IdStr
+		fmt.Printf("\n==========\nIDSTRING: \n%+v\n",getoembed)			
+	
+		//Get the oembed code for each tweet has to be queried separately :(
+		vals := url.Values{}
+		vals.Set("id", getoembed)
+		vals.Set("omit_script", "true")
+		embed, err := api.GetOEmbed(vals)
 		if err != nil {
-			fmt.Printf("GetSearch returned error: %s", err.Error())
+			fmt.Printf("GetUserTimeline returned error: %s", err.Error())
 		}
-	
-		fmt.Printf("\n==========\nTIMELINE: \n%+v\n",usertimeline)
-	
-		//TODO extract only the needed fields and format into Twitter oEmbed html format?
-		//1) store the single tweet data in a Tweet_Insert struct
-		//2) append the Tweet_Insert into a slice of Tweet_Inserts
-		
-		var New_Tweet_Inserts []New_Tweet_Insert
-		
-		for i := 0; i < len(usertimeline.Statuses); i++ {
-			//first put stuff from usertimeline into Tweet_Insert
-			//then get the oembed and put into Tweet_Insert
-			//Get the tweet ID for each tweet
-			
-			var this_tweet_insert New_Tweet_Insert
-			
-			this_tweet_insert.TwitterUser = usertimeline.Statuses[i].User.ScreenName
-			this_tweet_insert.TweetID = usertimeline.Statuses[i].IdStr
-			this_tweet_insert.Twitter_ID = usertimeline.Statuses[i].User.IdStr
 
-			
-			//convert Twitter's created_at time format to time.Time format
-			this_created_at := usertimeline.Statuses[i].CreatedAt
-			this_created_date, _ := time.Parse(time.RubyDate,this_created_at)
-			
-			this_tweet_insert.TweetDate = this_created_date
-						
-			//remove '_normal' from end of profile image filename in order to get full-size avatar
-			r := strings.NewReplacer("_normal", "")
-			p := usertimeline.Statuses[i].User.ProfileImageURL
-			avatar := r.Replace(p)
-			
-			this_tweet_insert.ProfileImageURL = avatar
-			
-			getoembed := usertimeline.Statuses[i].IdStr
-			fmt.Printf("\n==========\nIDSTRING: \n%+v\n",getoembed)			
+		fmt.Printf("\n==========\nEMBED: \n%+v\n",embed.Html)
 		
-			//Get the oembed code for each tweet has to be queried separately :(
-			vals := url.Values{}
-			vals.Set("id", getoembed)
-			vals.Set("omit_script", "true")
-			embed, err := api.GetOEmbed(vals)
-			if err != nil {
-				fmt.Printf("GetUserTimeline returned error: %s", err.Error())
-			}
+		this_tweet_insert.TweetOembed = embed.Html
+
+		fmt.Printf("\n==========\nTHIS_INSERT: \n%+v\n",this_tweet_insert)
+		
+		New_Tweet_Inserts = append(New_Tweet_Inserts, this_tweet_insert)
+
+	}
+			
+	fmt.Printf("\n==========\nTHIS_BATCH: \n%+v\n",New_Tweet_Inserts)
 	
-			fmt.Printf("\n==========\nEMBED: \n%+v\n",embed.Html)
-			
-			this_tweet_insert.TweetOembed = embed.Html
+	new_doinsert(New_Tweet_Inserts)
+}	
 
-			fmt.Printf("\n==========\nTHIS_INSERT: \n%+v\n",this_tweet_insert)
-			
-			New_Tweet_Inserts = append(New_Tweet_Inserts, this_tweet_insert)
 
-    	}
-    	    	
-    	fmt.Printf("\n==========\nTHIS_BATCH: \n%+v\n",New_Tweet_Inserts)
-    	
-    	new_doinsert(New_Tweet_Inserts)
-    }	
-    
-    
-    //end Twitter query routine
-    //fuckin' a, girl, it works!!!!
+//end Twitter query routine
+//fuckin' a, girl, it works!!!!
 
 
 //end of func add_new_user
