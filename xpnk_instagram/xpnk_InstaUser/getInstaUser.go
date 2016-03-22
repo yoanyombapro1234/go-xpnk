@@ -1,5 +1,7 @@
 package xpnk_instaUser
 
+//get the Instagram user id for a provided Instagram username
+
 import (
   "fmt"
   "github.com/yanatan16/golang-instagram/instagram"
@@ -8,7 +10,7 @@ import (
 
 func getInstaUserId(instaName string) string{
 
-	instaToken := ""
+	instaToken := "192772980.1fb234f.6121c6ef7adb4aaf86923777a8d2c1c2"
 
 	api := instagram.New("", instaToken)
 	
