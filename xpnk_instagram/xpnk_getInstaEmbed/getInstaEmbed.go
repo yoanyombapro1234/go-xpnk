@@ -11,7 +11,7 @@ type instaEmbed struct {
 	Html	string	`json:"html"`
 }
 	
-func getInstaEmbed(instaUrl string) {
+func GetInstaEmbed(instaUrl string) *instaEmbed{
 
 	instaEmbedEndPt := "https://api.instagram.com/oembed/?url="
 	InstaEmbedCall := instaEmbedEndPt+instaUrl
@@ -30,6 +30,8 @@ func getInstaEmbed(instaUrl string) {
 	
 	thisEmbed, err := getOembedHtml([]byte(body))
 	fmt.Printf("\nHTML: %v\n", thisEmbed)
+	
+	return thisEmbed
 }
 
 func getOembedHtml(body []byte) (*instaEmbed, error) {

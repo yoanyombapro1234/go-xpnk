@@ -1,9 +1,9 @@
-package xpnk_instaUserPosts
+package xpnk_getInstaUserPosts
 
 import  "testing"
 
 func TestGetInstaUserPosts(t *testing.T) {
 
-	getInstaUserPosts("1399704848")
+	GetInstaUserPosts("208560325")
 				
 }

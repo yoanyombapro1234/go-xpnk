@@ -1,12 +1,16 @@
-package xpnk_instaUserPosts
+package xpnk_getInstaUserPosts
+
+//gets recent Instagram posts for an Instagram user id
 
 import (
   "fmt"
   "github.com/yanatan16/golang-instagram/instagram"
   "net/url"
+  "time"
+  "strconv"
 )
 	
-func getInstaUserPosts(instaUserId string) {
+func GetInstaUserPosts(instaUserId string) *instagram.PaginatedMediasResponse{
 
 	instaToken := "192772980.1fb234f.6121c6ef7adb4aaf86923777a8d2c1c2"
 
@@ -21,10 +25,16 @@ func getInstaUserPosts(instaUserId string) {
 	
 	fmt.Println("Successfully created instagram.Api with user credentials")
 	
+	//TODO calculate unix timestamp for 24 hrs ago and insert into min_timestamp
+	now := time.Now()
+    secs := uint64(now.Unix() - (60 * 60 * 24))
+    unixtoday := strconv.FormatUint(secs, 10)
+    fmt.Println("Unix timestamp %v", unixtoday)
+	
 	params := url.Values{}
 	params.Set("count", "2")
 	params.Set("max_timestamp", "")
-	params.Set("min_timestamp","")
+	params.Set("min_timestamp",unixtoday)
 	
 	instaPosts, err := api.GetUserRecentMedia(instaUserId, params)
 	
@@ -40,4 +50,5 @@ func getInstaUserPosts(instaUserId string) {
 		fmt.Printf("Media Link: %v\n", instaPostID)
 	
 	}		
+	return instaPosts
 }	
