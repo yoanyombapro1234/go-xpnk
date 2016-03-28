@@ -1,5 +1,9 @@
 package xpnk_insertInsta
 
+/**************************************************************************************
+Takes a slice of Instagram_Insert objects and inserts them into the database
+**************************************************************************************/
+
 import (
 	"fmt"
     "database/sql"
@@ -9,7 +13,7 @@ import (
    	"log"
 )
 
-func insertInsta(instagramposts []xpnk_createInstaInsert.Instagram_Insert) string{
+func InsertInsta(instagramposts []xpnk_createInstaInsert.Instagram_Insert) string{
 
 	//delete posts older than 24 hours, func from delete-old-instagrams.go
 	//defer Dodelete() 

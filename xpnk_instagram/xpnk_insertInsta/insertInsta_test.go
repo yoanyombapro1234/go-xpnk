@@ -20,7 +20,7 @@ func TestInsertInsta(t *testing.T) {
 	
 	insert = append(insert, thisinsert)
 
-	v := insertInsta(insert)
+	v := InsertInsta(insert)
 	
 	if v != "inserted" {
 		t.Errorf("Expected INSERTED, got  ", v)

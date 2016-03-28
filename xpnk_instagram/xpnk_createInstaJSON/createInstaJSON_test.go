@@ -4,7 +4,7 @@ import  "testing"
 
 func TestCreateInstaJSON(t *testing.T) {
 
-	v := createInstaJSON(5)
+	v := CreateInstaJSON(5)
 	
 	if v != "File created!" {
 		t.Error("Expected File created!, got ", v)

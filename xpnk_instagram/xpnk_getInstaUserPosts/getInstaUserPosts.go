@@ -1,6 +1,8 @@
 package xpnk_getInstaUserPosts
 
-//gets recent Instagram posts for an Instagram user id
+/**************************************************************************************
+Takes an Instagram user ID and retrieves today's posts by that user from Instagram API
+**************************************************************************************/
 
 import (
   "fmt"

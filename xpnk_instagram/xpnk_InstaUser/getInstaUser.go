@@ -1,6 +1,8 @@
 package xpnk_instaUser
 
-//get the Instagram user id for a provided Instagram username
+/**************************************************************************************
+Takes an Instagram Username and requests the user ID from Instagram API
+**************************************************************************************/
 
 import (
   "fmt"

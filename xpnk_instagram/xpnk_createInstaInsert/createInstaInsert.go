@@ -1,5 +1,9 @@
 package xpnk_createInstaInsert
 
+/**************************************************************************************
+Takes a slice of instaPosts and prepares them for insertion into the datatbase by mapping each item to a database field
+**************************************************************************************/
+
 import (
 	"fmt"
 	"xpnk_instagram/xpnk_getInstaEmbed"
@@ -23,7 +27,7 @@ type Instagram_Insert struct {
 //1) store the single post data in an Instagram_Insert struct
 //2) append the Instagram_Insert into a slice of Instagram_Inserts
 
-func createInstaInsert(instaPosts *instagram.PaginatedMediasResponse) []Instagram_Insert {
+func CreateInstaInsert(instaPosts *instagram.PaginatedMediasResponse) []Instagram_Insert {
 	var Instagram_Inserts []Instagram_Insert
 
 	for i := 0; i < len(instaPosts.Medias); i++ {

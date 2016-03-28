@@ -48,7 +48,7 @@ type XpnkInstagram struct {
 	ProfileImageURL	string	`db:"instagram_avatar" 	json:"profile_image"`
 }
 
-func createInstaJSON(group_id int) string {
+func CreateInstaJSON(group_id int) string {
 	
 	dbmap := initDb()
 	defer dbmap.Db.Close()
@@ -100,7 +100,7 @@ func createInstaJSON(group_id int) string {
 
 	//write the Instagram user names to a file using file-naming convention
 
-	this_users, err := os.Create(this_name+"_insta_users.json")
+	this_users, err := os.Create("/Users/mizkirsten/Desktop/Node/XAPNIK/data/"+this_name+"_insta_users.json")
 	
 	//convert group_instagrammers struct to json
 	users_str, err := json.Marshal(group_instagrammers)

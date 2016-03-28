@@ -1,6 +1,8 @@
 package xpnk_storeInstagramID
 
-//stores the Instagram ID of a user in the user's db record
+/**************************************************************************************
+Takes an Instagram user ID and stores it in the user record of an existing user in the db or creates a new user in the db if user doesn't already exist
+**************************************************************************************/
 
 import (
 	"fmt"

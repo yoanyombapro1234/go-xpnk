@@ -1,5 +1,9 @@
 package xpnk_getInstaEmbed
 
+/**************************************************************************************
+Takes an Instagram url and retrieves the Instagram Oembed from Instagram API
+**************************************************************************************/
+
 import (
   "fmt"
   "net/http"

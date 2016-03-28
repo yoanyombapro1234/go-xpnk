@@ -13,7 +13,7 @@ func TestCreateInstaInsert(t *testing.T) {
 	
 	var v int
 
-	v = len(createInstaInsert(resp))
+	v = len(CreateInstaInsert(resp))
 
 	if v != resp_count {
 		t.Errorf("Expected %c, got %v", resp_count, v)
