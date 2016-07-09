@@ -120,7 +120,7 @@ func CreateInstaJSON(group_id int) string {
 	/******
 	* write the Instagram user names to a file using file-naming convention
 	******/
-	this_users, err := os.Create("/Users/mizkirsten/Desktop/Node/XAPNIK/data/"+this_name+"_insta_users.json")
+	this_users, err := os.Create("/home/xapnik/node-v0.12.5/XAPNIK/data/"+this_name+"_insta_users.json")
 	
 	//convert group_instagrammers struct to json
 	users_str, err := json.Marshal(group_instagrammers)
@@ -200,7 +200,7 @@ func JSONMarshal(v interface{}, safeEncoding bool) ([]byte, error) {
 ***************************/	
 func initDb() *gorp.DbMap {
 db, err := sql.Open("mysql",
-	"root:root@tcp(localhost:8889)/xapnik")
+	"root:hqao79eJegoZfXLMVpoCeQtZjpVa@tcp(localhost:3306)/xapnik")
 checkErr(err, "sql.Open failed")
 
 dbmap := &gorp.DbMap{Db: db, Dialect: gorp.MySQLDialect{}}

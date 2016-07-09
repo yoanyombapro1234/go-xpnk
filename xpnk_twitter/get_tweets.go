@@ -291,9 +291,8 @@ func doinsert(twitterposts []Tweet_Insert) string{
 /***************************
 * db connection config
 ***************************/	
-func initDb() *gorp.DbMap {
 db, err := sql.Open("mysql",
-	"")
+	"root:hqao79eJegoZfXLMVpoCeQtZjpVa@tcp(localhost:3306)/xapnik")
 checkErr(err, "sql.Open failed")
 
 dbmap := &gorp.DbMap{Db: db, Dialect: gorp.MySQLDialect{}}
