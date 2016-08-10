@@ -4,6 +4,11 @@ import  "testing"
 
 func TestGetInstaUserPosts(t *testing.T) {
 
-	GetInstaUserPosts("208560325")
+	var instaUser InstaUser 
+
+	instaUser.InstaID = ""
+	instaUser.Insta_accesstoken = ""
+	
+	GetInstaUserPosts(instaUser)
 				
 }

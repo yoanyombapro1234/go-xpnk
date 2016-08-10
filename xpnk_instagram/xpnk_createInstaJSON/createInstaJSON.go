@@ -5,9 +5,9 @@ Takes a group ID and writes all Instagram posts for that group to a json file us
 
 (1) get all the user id's for a single group
 (2) get all the instagram user id's for each of those user ids
-(3) get all the instagrams associated with each of those instagram_id's
-(4) put all the user's instagrams into an object keyed by user's Xpnk_ID
-(5) json-encode all the instagrams and write to a file using a naming convention
+(3) get all the instagram posts associated with each of those instagram_id's
+(4) put all the user's instagram posts into an object keyed by user's Xpnk_ID
+(5) json-encode all the instagram posts and write to a file using a naming convention
 **************************************************************************************/
 
 import (
@@ -40,6 +40,7 @@ type GroupMemberID struct {
 
 //stores the object for an Instagram post
 type XpnkInstagram struct {
+	InstagramPID	string	`db:"instagram_pid" 	json:"instagram_pid"`
 	InstagramUser	string	`db:"insta_user" 		json:"instagram_user"`
 	InstagramName	string	`db:"insta_name"		json:"instagram_name"`
 	InstagramUserID	string	`db:"insta_userid" 		json:"instagram_id"`
@@ -69,8 +70,6 @@ func CreateInstaJSON(group_id int) string {
 
 	if err != nil {fmt.Printf("There was an error ", err)}
 
-	fmt.Printf("\n==========\nGROUP NAME:%+v\n",group_name)
-
 	//extract just the group name string from group_name	
 	this_name := group_name.GroupName
 
@@ -80,8 +79,6 @@ func CreateInstaJSON(group_id int) string {
 	//convert all characters to lowercase
 	this_name = strings.ToLower(this_name)
 
-	fmt.Printf("\n==========\nGROUP NAME IS NOW:%+v\n",this_name)
-
 	/******
 	* get all the xpnk user_ID's associated with the Group_ID from USER_GROUPS
 	******/
@@ -89,9 +86,8 @@ func CreateInstaJSON(group_id int) string {
 
 	_, err = dbmap.Select(&group_members, "SELECT `user_ID` FROM `USER_GROUPS` WHERE `Group_ID`=?", group_id)
 
-	fmt.Printf("\n==========\nMember ID's:%+v\n",group_members)
-
 	checkErr(err, "Select failed")
+	
 	/****
 	* get the insta_userid from USERS for each user_ID in group_members
 	****/
@@ -103,8 +99,6 @@ func CreateInstaJSON(group_id int) string {
 				
 		thisInstaId, err := dbmap.SelectStr("SELECT `insta_userid` FROM `USERS` WHERE `user_ID`=?", instagrammer)
 		
-		fmt.Printf("\n==========\nTHIS INSTAGRAMMER:%+v\n==========\n",thisInstaId)
-		
 		var thisInstagrammer GroupInstagrammer
 		
 		thisInstagrammer.InstagramUserID = thisInstaId
@@ -114,13 +108,11 @@ func CreateInstaJSON(group_id int) string {
 
 		checkErr(err, "Select failed")
 	}
-	
-	fmt.Printf("\n==========\nINSTAGRAMMERS:%+v\n==========\n",group_instagrammers)
-	
+		
 	/******
 	* write the Instagram user names to a file using file-naming convention
 	******/
-	this_users, err := os.Create("/home/xapnik/node-v0.12.5/XAPNIK/data/"+this_name+"_insta_users.json")
+	this_users, err := os.Create("/Node/XAPNIK/data/"+this_name+"_insta_users.json")
 	
 	//convert group_instagrammers struct to json
 	users_str, err := json.Marshal(group_instagrammers)
@@ -128,7 +120,8 @@ func CreateInstaJSON(group_id int) string {
 		fmt.Println("Error encoding JSON")
 	}
 
-		this_users.WriteString(string(users_str))
+	this_users.WriteString(string(users_str))
+	
 	/*******
 	* get all the group Instagram posts from the db
 	*******/ 
@@ -143,14 +136,10 @@ func CreateInstaJSON(group_id int) string {
 		instagrammer := group_instagrammers[i].InstagramUserID
 		
 		this_user.XpnkID = group_instagrammers[i].XpnkID
-
-		fmt.Printf("\n==========\nINSTAGRAMMER:%+v\n==========\n",this_user.XpnkID)
 		
 		_, err := dbmap.Select(&user_instagrams, "SELECT * FROM `instagram_posts` WHERE `insta_userid`=?", instagrammer)
 		
 		this_user.InstagramPosts = user_instagrams
-		
-		fmt.Printf("\n==========\nTHIS USERS POSTS:%+v\n==========\n",this_user)
 		
 		group_instagrams = append(group_instagrams, this_user)
 		
@@ -160,12 +149,11 @@ func CreateInstaJSON(group_id int) string {
 		checkErr(err, "Select failed")
 
 	}
-	fmt.Printf("\n==========\nGROUP INSTAGRAMS:%+v\n==========\n",group_instagrams)
 
 	//write the contents of group_instagrams to a .json file
 	//name  file according to file-naming convention
 	
-	this_file, err := os.Create("/Users/mizkirsten/Desktop/Node/XAPNIK/data/"+this_name+"_instagrams.json")
+	this_file, err := os.Create("/Node/XAPNIK/data/"+this_name+"_instagrams.json")
 		fmt.Printf("\n==========\nCREATED:%+v\n==========\n",this_file)
 
 	//convert group_instagrams to json
@@ -200,7 +188,7 @@ func JSONMarshal(v interface{}, safeEncoding bool) ([]byte, error) {
 ***************************/	
 func initDb() *gorp.DbMap {
 db, err := sql.Open("mysql",
-	"root:hqao79eJegoZfXLMVpoCeQtZjpVa@tcp(localhost:3306)/xapnik")
+	"root:root@tcp(localhost:8889)/password")
 checkErr(err, "sql.Open failed")
 
 dbmap := &gorp.DbMap{Db: db, Dialect: gorp.MySQLDialect{}}

@@ -12,9 +12,15 @@ import (
   "strconv"
 )
 	
-func GetInstaUserPosts(instaUserId string) *instagram.PaginatedMediasResponse{
+type InstaUser struct {
+    InstaID				string				`db:"insta_userid"`
+    Insta_accesstoken	string				`db:"insta_accesstoken"`
+    Insta_maxID			string				
+}	
+	
+func GetInstaUserPosts(insta_User InstaUser) *instagram.PaginatedMediasResponse{
 
-	instaToken := "192772980.1fb234f.6121c6ef7adb4aaf86923777a8d2c1c2"
+	instaToken := insta_User.Insta_accesstoken
 
 	api := instagram.New("", instaToken)
 	
@@ -32,13 +38,20 @@ func GetInstaUserPosts(instaUserId string) *instagram.PaginatedMediasResponse{
     secs := uint64(now.Unix() - (60 * 60 * 24))
     unixtoday := strconv.FormatUint(secs, 10)
     fmt.Println("Unix timestamp %v", unixtoday)
+    fmt.Println("insta_User: %v", insta_User)
 	
 	params := url.Values{}
-	params.Set("count", "2")
-	params.Set("max_timestamp", "")
-	params.Set("min_timestamp",unixtoday)
+	params.Set("count", "10")
+	params.Set("scope", "public_content")
+	//params.Set("min_timestamp",unixtoday)
+	//params.Set("min_id", insta_User.Insta_maxID)
+	//these params are commented out in the hope that IG will fix their api some day
 	
-	instaPosts, err := api.GetUserRecentMedia(instaUserId, params)
+	fmt.Println("Params: %v", params)
+	
+	fmt.Println("Getting posts for insta_User: %v", insta_User.InstaID)
+	
+	instaPosts, err := api.GetUserRecentMedia(insta_User.InstaID, params)
 	
 	if err != nil {
 		panic(err)

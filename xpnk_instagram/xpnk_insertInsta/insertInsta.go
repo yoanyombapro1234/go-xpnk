@@ -18,7 +18,7 @@ func InsertInsta(instagramposts []xpnk_createInstaInsert.Instagram_Insert) strin
 	//delete posts older than 24 hours, func from delete-old-instagrams.go
 	//defer Dodelete() 
 
-	//Initialize a map variable to hold all our Tweet_Insert structs (tweets)
+	//Initialize a map variable to hold all our Instagram_Insert structs (posts)
 	var set map[int]xpnk_createInstaInsert.Instagram_Insert
 
 	dbmap := initDb()
@@ -58,7 +58,7 @@ func InsertInsta(instagramposts []xpnk_createInstaInsert.Instagram_Insert) strin
 ***************************/	
 func initDb() *gorp.DbMap {
 db, err := sql.Open("mysql",
-	"root:root@tcp(localhost:8889)/xapnik")
+	"root:root@tcp(localhost:8889)/password")
 checkErr(err, "sql.Open failed")
 
 dbmap := &gorp.DbMap{Db: db, Dialect: gorp.MySQLDialect{}}

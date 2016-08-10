@@ -42,8 +42,6 @@ func get_groups() []GroupID {
 	
 	checkErr(err, "Select failed")
 
-	fmt.Printf("\n==========\nGROUP IDS:%+v\n",group_ids)
-	
 	return group_ids
 	
 }//end Get_Groups  
@@ -53,7 +51,7 @@ func get_groups() []GroupID {
 ***************************/	
 func initDb() *gorp.DbMap {
 db, err := sql.Open("mysql",
-	"root:root@tcp(localhost:8889)/xapnik")
+	"root:root@tcp(localhost:8889)/password")
 checkErr(err, "sql.Open failed")
 
 dbmap := &gorp.DbMap{Db: db, Dialect: gorp.MySQLDialect{}}

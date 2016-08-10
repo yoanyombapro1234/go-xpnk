@@ -12,7 +12,7 @@ import (
 
 func getInstaUserId(instaName string) string{
 
-	instaToken := "192772980.1fb234f.6121c6ef7adb4aaf86923777a8d2c1c2"
+	instaToken := ""
 
 	api := instagram.New("", instaToken)
 	

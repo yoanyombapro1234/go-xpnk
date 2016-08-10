@@ -167,35 +167,22 @@ func Get_tweets() {
 				//If this is a retweet or retweet of a retweet, we need to grab the url 
 				//for any associated media like images or videos				
 				rtentities := len(usertimeline.Statuses[i].RetweetedStatus.Entities.Media) 
-				
-				fmt.Printf("\n==========\nRT MEDIA OBJECTS: \n%+v\n",rtentities)
-				
+								
 				qtentities := len(usertimeline.Statuses[i].RetweetedStatus.QuotedStatus.Entities.Media)
-				
-				fmt.Printf("\n==========\nQT MEDIA OBJECTS: \n%+v\n",qtentities)
-				
+								
 				//crazy if else is crazy -- use switch?
 				if rtentities == 0 && qtentities == 0 {
 					this_tweet_insert.TweetMedia = ""
-					
-					fmt.Printf("\n==========\nMEDIA URLs ARE EMPTY")
-					
+										
 				} else if rtentities == 0 && qtentities != 0 {
 				this_tweet_insert.TweetMedia = usertimeline.Statuses[i].RetweetedStatus.QuotedStatus.Entities.Media[0].Media_url
-				
-				fmt.Printf("\n==========\nMEDIA URL: \n%+v\n",this_tweet_insert.TweetMedia)
-				
+								
 				} else if rtentities != 0 {
 				this_tweet_insert.TweetMedia = usertimeline.Statuses[i].RetweetedStatus.Entities.Media[0].Media_url
-				
-				fmt.Printf("\n==========\nMEDIA URL: \n%+v\n",this_tweet_insert.TweetMedia)
-				
+								
 				} else {
 				this_tweet_insert.TweetMedia = ""
 					
-				fmt.Printf("\n==========\nNO CASES RETURNED TRUE FOR MEDIA URL'S")
-				}
-				
 				//convert Twitter's created_at time format to time.Time format
 				this_created_at := usertimeline.Statuses[i].CreatedAt
 				this_created_date, _ := time.Parse(time.RubyDate,this_created_at)
@@ -208,8 +195,6 @@ func Get_tweets() {
 				this_tweet_insert.ProfileImageURL = avatar
 				getoembed := usertimeline.Statuses[i].IdStr
 				
-				fmt.Printf("\n==========\nIDSTRING: \n%+v\n",getoembed)	
-						
 				//Get the oembed code for each tweet, has to be queried separately
 				vals := url.Values{}
 				vals.Set("id", getoembed)
@@ -219,12 +204,8 @@ func Get_tweets() {
 					fmt.Printf("GetUserTimeline returned error: %s", err.Error())
 				}
 	
-				fmt.Printf("\n==========\nEMBED: \n%+v\n",embed.Html)
-				
 				this_tweet_insert.TweetOembed = emoji.UnicodeToTwemoji(embed.Html, 16, false)
 
-				fmt.Printf("\n==========\nTHIS_INSERT: \n%+v\n",this_tweet_insert)
-			
 				Tweet_Inserts = append(Tweet_Inserts, this_tweet_insert)
 
 			}
@@ -236,8 +217,6 @@ func Get_tweets() {
    } //end group_ids loop
     
     //end Twitter query routine
-    //fuckin' a, girl, it works!!!!
-
 }
 //end of func main
 
@@ -269,9 +248,6 @@ func doinsert(twitterposts []Tweet_Insert) string{
 		set[i] = twitterposts[i]
 	}
 		
-	fmt.Printf("\n==========\nset is now:%+v\n",set)
-	
-	
 	//Insert the the tweets!	
 	for _, v := range set {	
 			
@@ -291,8 +267,9 @@ func doinsert(twitterposts []Tweet_Insert) string{
 /***************************
 * db connection config
 ***************************/	
+func initDb() *gorp.DbMap {
 db, err := sql.Open("mysql",
-	"root:hqao79eJegoZfXLMVpoCeQtZjpVa@tcp(localhost:3306)/xapnik")
+	"root:password@tcp(localhost:3306)/dbname")
 checkErr(err, "sql.Open failed")
 
 dbmap := &gorp.DbMap{Db: db, Dialect: gorp.MySQLDialect{}}

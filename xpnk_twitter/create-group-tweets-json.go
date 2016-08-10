@@ -124,7 +124,7 @@ func Create_group_tweets_json() {
 		/******
 		* write the twitter_user names to a file using a naming convention
 		******/
-		this_users, err := os.Create(this_name+"_users.json")
+		this_users, err := os.Create("/home/xapnik/node-v0.12.5/XAPNIK/data/"+this_name+"_users.json")
 		
 		//convert group_tweeters struct to json
 		users_str, err := json.Marshal(group_tweeters)

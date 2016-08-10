@@ -28,9 +28,7 @@ func StoreInstaUserId(instaUserId string, instaUserName string) int64 {
 	
 	this_Insta_UserInsert.Instagram_username = this_Insta_UserName
 	this_Insta_UserInsert.Instagram_ID = this_Insta_UserID
-	
-	fmt.Printf("\n==========\nUSERNAME: \n%v\n",this_Insta_UserInsert.Instagram_username)
-	
+		
 	stmt, err := dbmap.Exec("UPDATE USERS SET insta_userid = ? WHERE insta_user = ?", this_Insta_UserID, this_Insta_UserName)
 	count, err := stmt.RowsAffected()
 	if err != nil {
@@ -54,7 +52,7 @@ func checkErr(err error) {
 
 func initDb() *gorp.DbMap {
 db, err := sql.Open("mysql",
-	"root:root@tcp(localhost:8889)/xapnik")
+	"root:root@tcp(localhost:8889)/password")
 checkErr(err)
 
 dbmap := &gorp.DbMap{Db: db, Dialect: gorp.MySQLDialect{}}

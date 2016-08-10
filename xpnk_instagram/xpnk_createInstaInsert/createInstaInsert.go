@@ -6,9 +6,9 @@ Takes a slice of instaPosts and prepares them for insertion into the datatbase b
 
 import (
 	"fmt"
+	"strings"
 	"xpnk_instagram/xpnk_getInstaEmbed"
 	"github.com/yanatan16/golang-instagram/instagram"
-	//"time"
 	"github.com/chnlr/emoji"
 )
 
@@ -17,6 +17,7 @@ type Instagram_Insert struct {
 	InstagramUser	string						`db:"insta_user"`
 	InstagramName	string						`db:"insta_name"`
 	InstagramUserID	string						`db:"insta_userid"`
+	InstagramPID	string						`db:"instagram_pid"`
 	InstagramUrl	string						`db:"instagram_url"`
 	InstagramOembed	string						`db:"instagram_oembed"`
 	InstagramDate	string						`db:"instagram_date"`
@@ -36,6 +37,12 @@ func CreateInstaInsert(instaPosts *instagram.PaginatedMediasResponse) []Instagra
 		//Get the post ID for each Instagram post
 
 		var this_insta_insert Instagram_Insert
+		
+		//in order to get the correct max_PID later when fetching IG posts, we have to
+		//remove the _useridstring from the end of the post id before
+		//saving it to the db
+		var PID = strings.Split(instaPosts.Medias[i].Id, "_")
+		this_insta_insert.InstagramPID		= PID[0]
 
 		this_insta_insert.InstagramUser 	= instaPosts.Medias[i].User.Username
 		this_insta_insert.InstagramName 	= instaPosts.Medias[i].User.FullName
@@ -51,7 +58,6 @@ func CreateInstaInsert(instaPosts *instagram.PaginatedMediasResponse) []Instagra
 				
 		//Get the oembed code for each post, has to be queried separately		
 		getoembed := instaPosts.Medias[i].Link
-		fmt.Printf("\n==========\nIDSTRING: \n%+v\n",getoembed)		
 
 		embed := xpnk_getInstaEmbed.GetInstaEmbed(getoembed)
 		//if err != nil {
@@ -60,13 +66,10 @@ func CreateInstaInsert(instaPosts *instagram.PaginatedMediasResponse) []Instagra
 		//fmt.Printf("\n==========\nEMBED: \n%+v\n",embed.Html)
 	
 		this_insta_insert.InstagramOembed = emoji.UnicodeToTwemoji(embed.Html, 16, false)
-		fmt.Printf("\n==========\nTHIS_INSERT: \n%+v\n",this_insta_insert)
 
 		Instagram_Inserts = append(Instagram_Inserts, this_insta_insert)
 	}//end looping through all posts
-	
-	fmt.Printf("\n==========\nTHIS_BATCH: \n%+v\n",Instagram_Inserts)
-	
+		
 	return Instagram_Inserts
 	
-}//end createInstaInsert	
+}	

@@ -11,6 +11,7 @@ Queen file of xpnk_instagram.
 import (
 	"fmt"
 	"database/sql"
+	"strconv"
    	_ "github.com/go-sql-driver/mysql"
    	"github.com/gopkg.in/gorp.v1"
     "log"
@@ -18,55 +19,96 @@ import (
     "xpnk_instagram/xpnk_getInstaUserPosts"
     "xpnk_instagram/xpnk_createInstaInsert"
     "xpnk_instagram/xpnk_insertInsta"
+    "xpnk_instagram/xpnk_deleteInsta"
 )
 
-//stores only the group_id of a group
-type InstaID struct {
-    InstaID	string		`db:"insta_userid"`
+type MaxIGPID struct {
+	MaxPID				sql.NullString		`db:"MAX(CAST(instagram_pid AS Unsigned))"`
 }
 
 func main() {
-
+	
 	all_instagrammers := get_instaIDs()
 	var instaUserPosts *instagram.PaginatedMediasResponse
 	var insert []xpnk_createInstaInsert.Instagram_Insert
 	
 	for i := 0; i < len( all_instagrammers ); i++ {	
-		if all_instagrammers[i].InstaID != "" {
-			instaUserPosts = xpnk_getInstaUserPosts.GetInstaUserPosts( all_instagrammers[i].InstaID )
+		if all_instagrammers[i].Insta_accesstoken != "" {
+			var this_insta_user xpnk_getInstaUserPosts.InstaUser
+			this_insta_user.InstaID = all_instagrammers[i].InstaID
+			this_insta_user.Insta_accesstoken = all_instagrammers[i].Insta_accesstoken
+						
+			this_maxID := get_maxID(this_insta_user.InstaID)
+			this_insta_user.Insta_maxID = this_maxID
+			//collecting this but not using it since IG API is broken for this param
+			
+			instaUserPosts = xpnk_getInstaUserPosts.GetInstaUserPosts( this_insta_user )
 			insert = xpnk_createInstaInsert.CreateInstaInsert(instaUserPosts)
+			
+			//before we update the IG posts table, we have to empty it for this user
+			//why? because IG API doesn't work properly and sends duplicates
+			this_igid := all_instagrammers[i].InstaID
+			xpnk_deleteInsta.DeleteInsta(this_igid)
+			
 			xpnk_insertInsta.InsertInsta(insert)
+		} else {
+			fmt.Println("\n==========\nNo Instagram token yet.\n")
 		}	
 	}
 }//end main
 
-func get_instaIDs() []InstaID {
+func get_instaIDs() []xpnk_getInstaUserPosts.InstaUser {
 	
 	dbmap := initDb()
 	defer dbmap.Db.Close()
+	dbmap.AddTableWithName(xpnk_getInstaUserPosts.InstaUser{}, "USERS")
 	
-	var insta_ids []InstaID
+	var insta_ids []xpnk_getInstaUserPosts.InstaUser
 	
-	//get all Instagram user ids from the USERS table	
-
-	_,err := dbmap.Select(&insta_ids, "SELECT `insta_userid` FROM USERS")
+	//get all Instagram user ids and access tokens from the USERS table	but no empty ones
 	
-	if err != nil {fmt.Printf("There was an error ", err)}
-	
+	_,err := dbmap.Select(&insta_ids, "select insta_accesstoken, insta_userid from USERS WHERE insta_userid != ''  && insta_accesstoken != '' ")
+		
 	checkErr(err, "Select failed")
-
-	fmt.Printf("\n==========\nUSER INSTAGRAM IDS:%+v\n",insta_ids)
 	
 	return insta_ids
 	
-}//end Get_Groups  
+}//end get_instaIDs  
+
+func get_maxID(iguser_id string) string {
+	var insta_max_id MaxIGPID
+	
+	dbmap := initDb()
+	defer dbmap.Db.Close()
+	//dbmap.AddTableWithName(insta_max_id, "instagram_posts")
+	
+	err := dbmap.SelectOne(&insta_max_id, "select MAX(CAST(instagram_pid AS Unsigned)) from instagram_posts where insta_userid = ?", iguser_id)
+	
+	checkErr(err, "Select failed:  ")
+	
+	var max_id string
+	
+	if insta_max_id.MaxPID.String != "" {
+		maxpid, err := strconv.ParseInt(insta_max_id.MaxPID.String, 10, 64)
+		int_id := maxpid + 1
+		max_id = strconv.FormatInt(int_id, 10)
+		//max_id += "_" + iguser_id
+		fmt.Print("Errors: %v", err)
+	} else {
+		max_id = ""
+		fmt.Printf("\nmax_id is an empty string\n")
+	}	
+
+	
+	return max_id
+}
 
 /***************************
 * db connection config
 ***************************/	
 func initDb() *gorp.DbMap {
 db, err := sql.Open("mysql",
-	"root:root@tcp(localhost:8889)/xapnik")
+	"root:root@tcp(localhost:8889)/password")
 checkErr(err, "sql.Open failed")
 
 dbmap := &gorp.DbMap{Db: db, Dialect: gorp.MySQLDialect{}}
