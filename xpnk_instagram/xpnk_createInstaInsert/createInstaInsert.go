@@ -69,7 +69,7 @@ func CreateInstaInsert(instaPosts *instagram.PaginatedMediasResponse) []Instagra
 
 		Instagram_Inserts = append(Instagram_Inserts, this_insta_insert)
 	}//end looping through all posts
-		
+	
 	return Instagram_Inserts
 	
-}	
+}//end createInstaInsert	

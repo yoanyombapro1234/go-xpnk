@@ -1,4 +1,4 @@
-package main
+package instagram_json_workmanager
 
 /**************************************************************************************
 Queries the DB for all the group ID's and iterates through passing each one to Insta_json
@@ -18,7 +18,7 @@ type GroupID struct {
     GroupID	int		`db:"Group_ID"`
 }
 
-func main() {
+func Create_group_ig_json() {
 
 	all_groups := get_groups()
 
@@ -41,7 +41,7 @@ func get_groups() []GroupID {
 	if err != nil {fmt.Printf("There was an error ", err)}
 	
 	checkErr(err, "Select failed")
-
+	
 	return group_ids
 	
 }//end Get_Groups  

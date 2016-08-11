@@ -11,10 +11,10 @@ Takes a group ID and writes all Instagram posts for that group to a json file us
 **************************************************************************************/
 
 import (
-	"fmt"
-	"database/sql"
+    "fmt"
+    "database/sql"
    	_ "github.com/go-sql-driver/mysql"
-   	"github.com/gopkg.in/gorp.v1"
+    "github.com/gopkg.in/gorp.v1"
     "strings"
     "bytes"
     "os"
@@ -24,41 +24,41 @@ import (
 
 //stores only the group_name of the group_ID
 type Groupname struct {
-    GroupName		string	`db:"group_name"`
+    GroupName		string	                              `db:"group_name"`
 }
 
 //stores the Instagram user name and XpnkID for each GroupMemberID
 type GroupInstagrammer struct {
-	XpnkID			string
-    InstagramUserID	string	`db:"insta_userid"`
+    XpnkID		string
+    InstagramUserID	string	                               `db:"insta_userid"`
 }
 
 //stores the Xapnik user_ID's of each member of a group
 type GroupMemberID struct {
-    UserID	string			`db:"user_ID"`
+    UserID	        string			               `db:"user_ID"`
 }
 
 //stores the object for an Instagram post
 type XpnkInstagram struct {
-	InstagramPID	string	`db:"instagram_pid" 	json:"instagram_pid"`
-	InstagramUser	string	`db:"insta_user" 		json:"instagram_user"`
-	InstagramName	string	`db:"insta_name"		json:"instagram_name"`
-	InstagramUserID	string	`db:"insta_userid" 		json:"instagram_id"`
-	InstagramID		string	`db:"instagram_url" 	json:"instagram_url"`
-	InstagramOembed	string	`db:"instagram_oembed" 	json:"instagram_oembed"`
-	InstagramDate	string	`db:"instagram_date"	json:"created_time"`
-	ProfileImageURL	string	`db:"instagram_avatar" 	json:"profile_image"`
+    InstagramPID	string	`db:"instagram_pid" 	       json:"instagram_pid"`
+    InstagramUser	string	`db:"insta_user" 	       json:"instagram_user"`
+    InstagramName	string	`db:"insta_name"	       json:"instagram_name"`
+    InstagramUserID	string	`db:"insta_userid" 	       json:"instagram_id"`
+    InstagramID		string	`db:"instagram_url" 	       json:"instagram_url"`
+    InstagramOembed	string	`db:"instagram_oembed" 	       json:"instagram_oembed"`
+    InstagramDate	string	`db:"instagram_date"	       json:"created_time"`
+    ProfileImageURL	string	`db:"instagram_avatar" 	       json:"profile_image"`
 }
 
 type UserInstagrams struct {
-	XpnkID			string
-	InstagramPosts	[]XpnkInstagram
+    XpnkID		string
+    InstagramPosts	[]XpnkInstagram
 }
 
 func CreateInstaJSON(group_id int) string {
 	
-	dbmap := initDb()
-	defer dbmap.Db.Close()
+        dbmap := initDb()
+        defer dbmap.Db.Close()
 	
 	var group_name Groupname
 	
@@ -87,7 +87,7 @@ func CreateInstaJSON(group_id int) string {
 	_, err = dbmap.Select(&group_members, "SELECT `user_ID` FROM `USER_GROUPS` WHERE `Group_ID`=?", group_id)
 
 	checkErr(err, "Select failed")
-	
+
 	/****
 	* get the insta_userid from USERS for each user_ID in group_members
 	****/
@@ -108,11 +108,11 @@ func CreateInstaJSON(group_id int) string {
 
 		checkErr(err, "Select failed")
 	}
-		
+	
 	/******
 	* write the Instagram user names to a file using file-naming convention
 	******/
-	this_users, err := os.Create("/Node/XAPNIK/data/"+this_name+"_insta_users.json")
+	this_users, err := os.Create("/Users/mizkirsten/Desktop/Node/XAPNIK/data/"+this_name+"_insta_users.json")
 	
 	//convert group_instagrammers struct to json
 	users_str, err := json.Marshal(group_instagrammers)
@@ -122,7 +122,7 @@ func CreateInstaJSON(group_id int) string {
 
 	this_users.WriteString(string(users_str))
 	
-	/*******
+        /*******
 	* get all the group Instagram posts from the db
 	*******/ 
 	var group_instagrams []UserInstagrams
@@ -136,7 +136,7 @@ func CreateInstaJSON(group_id int) string {
 		instagrammer := group_instagrammers[i].InstagramUserID
 		
 		this_user.XpnkID = group_instagrammers[i].XpnkID
-		
+
 		_, err := dbmap.Select(&user_instagrams, "SELECT * FROM `instagram_posts` WHERE `insta_userid`=?", instagrammer)
 		
 		this_user.InstagramPosts = user_instagrams
@@ -153,8 +153,7 @@ func CreateInstaJSON(group_id int) string {
 	//write the contents of group_instagrams to a .json file
 	//name  file according to file-naming convention
 	
-	this_file, err := os.Create("/Node/XAPNIK/data/"+this_name+"_instagrams.json")
-		fmt.Printf("\n==========\nCREATED:%+v\n==========\n",this_file)
+	this_file, err := os.Create("/Users/mizkirsten/Desktop/Node/XAPNIK/data/"+this_name+"_instagrams.json")
 
 	//convert group_instagrams to json
 	str, err := JSONMarshal(group_instagrams, true)

@@ -1,12 +1,12 @@
 package main
 
 import (
-"github.com/gin-gonic/gin"
-"fmt"
-"log"
-"database/sql"
-_ "github.com/go-sql-driver/mysql"
-"github.com/gopkg.in/gorp.v1"
+    "github.com/gin-gonic/gin"
+    "fmt"
+    "log"
+    "database/sql"
+    _ "github.com/go-sql-driver/mysql"
+    "github.com/gopkg.in/gorp.v1"
 )
  
 type NewMobileReg struct {
@@ -48,9 +48,7 @@ func PostUser(c *gin.Context) {
 	
 	var user NewMobileReg
 	c.Bind(&user)
-	
-	fmt.Printf("\n==========\nUSER\n%+v\n",user)
-	
+		
 	if user.Userid != "" {
 	
 		 content := &NewMobileReg{
@@ -61,8 +59,6 @@ func PostUser(c *gin.Context) {
 			 Message:		user.Message,
 			 Push:			user.Push,
 		 }
-		 
-		 fmt.Printf("\n==========\nNewMobileReg: \n%+v\n",content)	
 		 
 		 c.JSON(201, content)
 		 doinsert(user)
@@ -118,14 +114,9 @@ func create_insert(n NewMobileReg) (i MobileRegInsert) {
 	i.Androidtokens = ThisAndroidTokens
 	i.IOSTokens = ThisIOSTokens
 	i.Message = n.Message
-	
-	fmt.Printf("\n==========\nTHE_INSERT: \n%+v\n",i)
-	
+		
 	return i
 }
-
-
-
 //end db insert routine	
 //Maps are not inherently safe for concurrency - will have to use sync.RWMutex	
 
@@ -142,7 +133,7 @@ func checkErr(err error, msg string) {
 	
 func initDb() *gorp.DbMap {
 db, err := sql.Open("mysql",
-	"root:root@tcp(localhost:8889)/xapnik")
+	"root:root@tcp(localhost:8889)/password")
 checkErr(err, "sql.Open failed")
 
 dbmap := &gorp.DbMap{Db: db, Dialect: gorp.MySQLDialect{}}

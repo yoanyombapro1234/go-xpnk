@@ -5,12 +5,12 @@ Takes a slice of Instagram_Insert objects and inserts them into the database
 **************************************************************************************/
 
 import (
-	"fmt"
+    "fmt"
     "database/sql"
-   	_ "github.com/go-sql-driver/mysql"
-   	"github.com/gopkg.in/gorp.v1"
-   	"xpnk_instagram/xpnk_createInstaInsert"
-   	"log"
+    _ "github.com/go-sql-driver/mysql"
+    "github.com/gopkg.in/gorp.v1"
+    "xpnk_instagram/xpnk_createInstaInsert"
+    "log"
 )
 
 func InsertInsta(instagramposts []xpnk_createInstaInsert.Instagram_Insert) string{
@@ -34,9 +34,6 @@ func InsertInsta(instagramposts []xpnk_createInstaInsert.Instagram_Insert) strin
 		set[i] = instagramposts[i]
 	}
 		
-	fmt.Printf("\n==========\nset is now:%+v\n",set)
-	
-	
 	//Insert the the Instagrams!	
 	for _, v := range set {	
 			

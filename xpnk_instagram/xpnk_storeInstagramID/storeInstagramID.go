@@ -5,10 +5,10 @@ Takes an Instagram user ID and stores it in the user record of an existing user 
 **************************************************************************************/
 
 import (
-	"fmt"
-   	_ "github.com/go-sql-driver/mysql"
-   	"database/sql"
-   	"github.com/gopkg.in/gorp.v1"
+    "fmt"
+    _ "github.com/go-sql-driver/mysql"
+    "database/sql"
+    "github.com/gopkg.in/gorp.v1"
 )
 
 //stores Instagram user ID for insertion into db
@@ -28,7 +28,7 @@ func StoreInstaUserId(instaUserId string, instaUserName string) int64 {
 	
 	this_Insta_UserInsert.Instagram_username = this_Insta_UserName
 	this_Insta_UserInsert.Instagram_ID = this_Insta_UserID
-		
+	
 	stmt, err := dbmap.Exec("UPDATE USERS SET insta_userid = ? WHERE insta_user = ?", this_Insta_UserID, this_Insta_UserName)
 	count, err := stmt.RowsAffected()
 	if err != nil {

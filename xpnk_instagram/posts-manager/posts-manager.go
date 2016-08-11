@@ -1,4 +1,4 @@
-package main
+package posts_manager
 
 /**************************************************************************************
 Queen file of xpnk_instagram.
@@ -26,8 +26,9 @@ type MaxIGPID struct {
 	MaxPID				sql.NullString		`db:"MAX(CAST(instagram_pid AS Unsigned))"`
 }
 
-func main() {
+func Get_posts() {
 	
+	fmt.Println("\n==========\nGetting all instagrammers.\n")
 	all_instagrammers := get_instaIDs()
 	var instaUserPosts *instagram.PaginatedMediasResponse
 	var insert []xpnk_createInstaInsert.Instagram_Insert
@@ -80,7 +81,6 @@ func get_maxID(iguser_id string) string {
 	
 	dbmap := initDb()
 	defer dbmap.Db.Close()
-	//dbmap.AddTableWithName(insta_max_id, "instagram_posts")
 	
 	err := dbmap.SelectOne(&insta_max_id, "select MAX(CAST(instagram_pid AS Unsigned)) from instagram_posts where insta_userid = ?", iguser_id)
 	
@@ -93,12 +93,9 @@ func get_maxID(iguser_id string) string {
 		int_id := maxpid + 1
 		max_id = strconv.FormatInt(int_id, 10)
 		//max_id += "_" + iguser_id
-		fmt.Print("Errors: %v", err)
 	} else {
 		max_id = ""
-		fmt.Printf("\nmax_id is an empty string\n")
 	}	
-
 	
 	return max_id
 }

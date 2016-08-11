@@ -10,9 +10,9 @@ currently doesn't work
 
 import (
     "database/sql"
-   	_ "github.com/go-sql-driver/mysql"
-   	"github.com/gopkg.in/gorp.v1"
-   	"log"
+    _ "github.com/go-sql-driver/mysql"
+    "github.com/gopkg.in/gorp.v1"
+    "log"
 )
 
 func DeleteInsta(instaID string) string{
