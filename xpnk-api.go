@@ -74,7 +74,7 @@ type NewDisqusAuthInsert struct {
 }
 
 const (
-	mySigningKey = "lakdjfiafjeoijaldknamnf823984udkafdjasdf"
+	mySigningKey = ""
 )
 	 
 
