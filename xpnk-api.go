@@ -7,7 +7,26 @@ import (
    		 _ "github.com/go-sql-driver/mysql"
    		 "xpnk_auth"
    		 "xpnk-shared/db_connect"
+   		 "xpnk-group/xpnk_createGroupFromSlack"
  )
+ 
+type SlackTeamToken struct {
+	TeamToken			string					`form:"team_token" binding:"required"`
+	BotToken			string					`form:"bot_token"  binding:"required"`
+} 
+ 
+type SlackCommand struct {
+	Token				string					`form:"token" binding:"required"`			
+	TeamID				string					`form:"team_id" binding:"required"`
+	TeamDomain			string					`form:"team_domain" binding:"required"`
+	ChannelID			string					`form:"channel_id" binding:"required"`
+	ChannelName			string					`form:"channel_name" binding:"required"`
+	UserID				string					`form:"user_id" binding:"required"`
+	UserName			string					`form:"user_name" binding:"required"`
+	Command				string					`form:"command" binding:"required"`
+	Text				string					`form:"text" binding:"required"`
+	ResponseURL			string					`form:"response_url" binding:"required"`
+} 
  
 type Usertoken struct {
 	Token				string					`json:"token"`
@@ -21,12 +40,14 @@ type NewSlackAuth struct {
 	 Slack_accesstoken	string					`json:"access_token"`
 	 Slack_userid		string					`json:"slack_userid"`
 	 Slack_username		string					`json:"slack_name"`
+	 Slack_avatar		string					`json:"slack_avatar"`
 }
 
 type NewSlackAuthInsert struct {
 	 Slack_accesstoken	string					`db:"slack_authtoken"`
 	 Slack_userid		string					`db:"slack_userid"`
 	 Slack_username		string					`db:"slack_name"`
+	 Slack_avatar		string					`db:"profile_image"`
 	 Xpnk_id			int						`db:"user_ID"`
 }
 
@@ -74,7 +95,7 @@ type NewDisqusAuthInsert struct {
 }
 
 const (
-	mySigningKey = ""
+	mySigningKey = "lakdjfiafjeoijaldknamnf823984udkafdjasdf"
 )
 	 
 
@@ -91,7 +112,11 @@ func main() {
 	
 	r.GET("/ping", func(c *gin.Context) {
         c.String(200, "Hello")
-      })  
+      })
+      
+    r.POST("/ping", func(c *gin.Context) {
+        c.String(200, "Hello")
+      })    
 	
 	v1 := r.Group("api/v1")
 		{
@@ -103,6 +128,13 @@ func main() {
 			v1.GET ("/ping", func(c *gin.Context) {
 				c.String(200, "Hello there.")
 			})
+						
+			v1.OPTIONS ("/slack_new_group", func(c *gin.Context) {
+			    c.Writer.Header().Set("Access-Control-Allow-Methods", "POST, PUT")
+ 				c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, token, xpnkid")
+ 				c.Next()
+			})
+			v1.POST ("/slack_new_group", SlackCreateNewGroup)
 			
 			v1.OPTIONS ("/xpnk_auth_set", func(c *gin.Context) {
 				c.Writer.Header().Set("Access-Control-Allow-Methods", "POST, PUT")
@@ -132,15 +164,6 @@ func main() {
  				c.Next()
 			})
 			v1.POST ("/xpnk_read_header", XPNKReadHeader)
-			*/
-			
-			/*
-			V1.OPTIONS ("/slack_new_group", func(c *gin.Context) {
-			    c.Writer.Header().Set("Access-Control-Allow-Methods", "POST, PUT")
- 				c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type")
- 				c.Next()
-			})
-			V1.POST ("slack_new_group", SlackNewGroup)
 			*/
 			
 			v1.OPTIONS ("/slack_new_member", func(c *gin.Context) {
@@ -187,6 +210,40 @@ func Cors() gin.HandlerFunc {
 * Endpoint functions
 * 
 *****************************************/
+
+func SlackCreateNewGroup (c *gin.Context) {
+	fmt.Printf("GIN CONTEXT:  %+v", c)
+	var team_tokens xpnk_createGroupFromSlack.SlackTeamTokens
+	var token string
+	var bot_token string
+	c.Bind(&team_tokens) 
+	fmt.Printf("TEAM TOKENS: %+v", team_tokens)
+	fmt.Printf("TOKEN ONLY:  %+v", team_tokens.TeamToken)
+	
+	token = team_tokens.TeamToken
+	bot_token = team_tokens.BotToken
+
+	if token != "" && bot_token != "" { 
+	c.JSON(200, "Well hello, Slack friend! I'll set up your Xapnik group and send the team invitations when it's ready.")
+		xpnk_createGroupFromSlack.CreateGroup(team_tokens)
+	} else {
+		c.JSON(422, gin.H{"error":"I'm sorry, I seem to have lost my mind."})
+	}
+}
+
+func SlackInviteGroup (c *gin.Context) {
+	var slack_command SlackCommand
+	c.Bind(&slack_command) 
+	fmt.Printf("SLACK COMMAND: %+v", slack_command)	
+	
+	if slack_command.Token == "fkgMJNcN9hkSHDDh37rzDCvY" {
+		c.JSON(200, "Well hello, Slack friend! I'm sending invitations to your team (including you!) with instructions on how join your new Xapnik group.")
+		//get a team token from slack
+		//send the team token to createGroupFromSlack.CreateGroup
+	} else {
+		c.JSON(422, gin.H{"error":"I'm sorry, I seem to have lost my mind."})
+	}
+}
 
 func XPNKAuthSet (c *gin.Context)  {
 	usertoken, err := xpnk_auth.NewToken([]byte(mySigningKey))
@@ -393,6 +450,7 @@ func updateSlackUser(new_Slackauth NewSlackAuth) int{
 		new_Slackauthinsert.Slack_accesstoken = new_Slackauth.Slack_accesstoken
 	 	new_Slackauthinsert.Slack_userid = new_Slackauth.Slack_userid	 
 	 	new_Slackauthinsert.Slack_username = new_Slackauth.Slack_username
+	 	new_Slackauthinsert.Slack_avatar = new_Slackauth.Slack_avatar
 		
 		_, dberr := dbmap.Update(&new_Slackauthinsert)
 		if dberr == nil {

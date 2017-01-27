@@ -8,10 +8,12 @@ Queen file for setting up a new Xapnik group from a Slack group.
 4) Creates new Xapnik Users from the Slack Team members' data
 5) Gets all the new Xapnik Users xpnkID's
 6) Adds the new User xpnkID's to the User_Groups table associated the new group_ID
+7) Sends a Slack DM to each group member with the Xapnik group URL
 **************************************************************************************/
 
 import (
 	"fmt"
+	"strings"
 	"xpnk-group/xpnk_getSlackGroup"
 	"xpnk-group/xpnk_createGroupInsert"
 	"xpnk-group/xpnk_insertGroup"
@@ -24,7 +26,15 @@ import (
 	"xpnk-shared/db_connect"
 )
 
-func CreateGroup(token string) string {
+type SlackTeamTokens struct {
+	TeamToken			string					`form:"team_token" binding:"required"`
+	BotToken			string					`form:"bot_token"  binding:"required"`
+} 
+
+func CreateGroup(tokens SlackTeamTokens) string {
+	
+	token := tokens.TeamToken
+	bot_token := tokens.BotToken
 
 	groupInfo := xpnk_getSlackGroup.GetSlackGroup(token)
 	
@@ -70,6 +80,20 @@ func CreateGroup(token string) string {
 		
 	
 	xpnk_addUsersToGroup.AddUsersToGroup(xpnk_groupID, memberXPNKIDs)
+	
+	//send Slack invites
+	xpnkGroupPath := strings.Replace(groupInfo.GroupName, " ", "-", -1)
+	var thisSlacker Slacker
+	for i := 0; i <len(teammembers); i++ {
+		thisSlacker.Slacker 	= teammembers[i].SlackName
+		thisSlacker.Token		= bot_token
+		thisSlacker.SlackGroup	= groupInfo.GroupName
+		thisSlacker.XpnkGroup	= xpnkGroupPath
+		
+		Invite(thisSlacker)
+		
+		fmt.Printf("Invited %s to %s with this token %s\n", thisSlacker.Slacker, thisSlacker.XpnkGroup, thisSlacker.Token)
+	}
 
 	return "Check the database!"
 }
