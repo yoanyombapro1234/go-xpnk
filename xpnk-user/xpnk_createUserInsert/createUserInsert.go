@@ -6,6 +6,7 @@ Takes a generic User struct and prepares it for insertion into the USERS table
 
 import (
 	"fmt"
+	"database/sql"
 )
 
 //the one User struct to rule them all
@@ -17,12 +18,12 @@ type User_Insert struct {
 	InstaUser			string					`db:"insta_user"`
 	FirstName			string					`db:"first_name"`
 	LastName			string					`db:"last_name"`
-	TwitterID			string					`db:"twitter_ID"`
+	TwitterID			sql.NullString			`db:"twitter_ID"`
 	LastTweet			string					`db:"last_tweet"`
-	InstaUserID			string					`db:"insta_userid"`
+	InstaUserID			sql.NullString			`db:"insta_userid"`
 	InstaAccessToken	string					`db:"insta_accesstoken"`
 	DisqusUserName		string					`db:"disqus_username"`
-	DisqusUserID		string					`db:"disqus_userid"`
+	DisqusUserID		sql.NullString			`db:"disqus_userid"`
 	DisqusAccessToken	string					`db:"disqus_accesstoken"`
 	DisqusRefreshToken	string					`db:"disqus_refreshtoken"`
 	ProfileImage		string					`db:"profile_image"`			
