@@ -2,6 +2,7 @@ package xpnk_createGroupFromSlack
 
 import (
 	"fmt"
+	"strings"
 	"github.com/nlopes/slack"
 )
 
@@ -17,6 +18,7 @@ type Slacker struct {
 	Slacker				string
 	SlackGroup			string
 	XpnkGroup			string
+	XpnkToken			string
 }
 
 func Invite (slacker Slacker) string {
@@ -24,12 +26,18 @@ func Invite (slacker Slacker) string {
 	slacker_token			:= slacker.Token
 	slacker_name 			:= "@"+slacker.Slacker
 	slacker_group 			:= slacker.SlackGroup
-	xpnk_group 				:= slacker.XpnkGroup
+	xpnk_group_name         := slacker.XpnkGroup
+	xpnk_group 				:= strings.ToLower(xpnk_group_name)
+	xpnk_token				:= slacker.XpnkToken
 	
 	api := slack.New(slacker_token)
 	api.SetDebug(true)
 	
-	invite_text				:= "Hi there! Your Slack team, "+slacker_group+", has created a Xapnik group so you can easily boost each other on social media and never miss a thing. Just click this link to get started in about 15 seconds. It's private to team members only. http://localhost:8000/XAPNIK/#/group/"+xpnk_group+"/slack-invite"
+	invite_url				:= "http://localhost:8000/XAPNIK/#/group/"+xpnk_group+"/slack-invite/?xpnk_tkn="+xpnk_token
+	
+	fmt.Printf("Invite url:   %s/n", invite_url)
+	
+	invite_text				:= "Hi there! Your Slack team, "+slacker_group+", has created a Xapnik group so you can easily boost each other on social media and never miss a thing. Just click this link to get started in about 15 seconds. It's private to team members only:  "+invite_url
 	
 	params					:= slack.PostMessageParameters{}
 	channelID, timestamp, 

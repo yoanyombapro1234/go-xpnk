@@ -8,28 +8,44 @@ import (
 )
 
 const (
-    mySigningKey = ""
+    MySigningKey = ""
 )
 
 func XPNKAuth() {
-    createdToken, err := NewToken([]byte(mySigningKey))
+    createdToken, err := NewToken([]byte(MySigningKey), "", "")
     if err != nil {
         fmt.Println("Creating token failed")
     }
-    ParseToken(createdToken, mySigningKey)
+    ParseToken(createdToken, MySigningKey)
 }
 
-func NewToken(mySigningKey []byte) (string, error) {
+func NewToken(MySigningKey []byte, source string, identifier string) (string, error) {
     // Create the token
+    if source == "" { source = "none" }
+    if identifier == "" { identifier = "none" }
+    
     token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-    	"foo": "bar",
+    	"iss": source,
+    	"jti": identifier,
     	"nbf": time.Now().Unix(),
     } )
     // Sign and get the complete encoded token as a string
-    tokenString, err := token.SignedString(mySigningKey)
+    tokenString, err := token.SignedString(MySigningKey)
     fmt.Println(tokenString, err)
     return tokenString, err
 }
+
+func GetNewGroupToken(source string, identifier string) string {
+	thistoken, err 					:= NewToken([]byte(MySigningKey), source, identifier)
+	var	NewGroupToken				string
+	if err != nil {
+		NewGroupToken 				= "There was an error creating the token."
+		fmt.Println(err)
+	}	else {
+		NewGroupToken 				= thistoken
+	}
+	return NewGroupToken
+}			
 
 func ParseToken(myToken string, myKey string) int {
     token, err := jwt.Parse(myToken, func(token *jwt.Token) (interface{}, error) {
@@ -43,4 +59,18 @@ func ParseToken(myToken string, myKey string) int {
         fmt.Println("This token is terrible!  I cannot accept this: %e", err)
         return 0
     }
+}
+
+func UnpackToken(myToken string, myKey string) interface{} {
+    token, err := jwt.Parse(myToken, func(token *jwt.Token) (interface{}, error) {
+        return []byte(myKey), nil
+    })
+	
+	if err == nil && token.Valid {
+		fmt.Println("Unpacked the token:  %+v\n", token)
+		return "Success!"
+	} else {
+		fmt.Println("Couldn't unpack the token:  %+v\n", err)
+		return err
+	}	
 }
