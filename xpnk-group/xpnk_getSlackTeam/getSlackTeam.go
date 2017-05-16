@@ -31,11 +31,13 @@ func GetSlackTeam(token string) []xpnk_createUserInsert.User_Insert{
 	for i := 0; i < len(teamList); i++ {
 		var this_team_member xpnk_createUserInsert.User_Insert
 		
-		if teamList[i].Deleted != true  {
+		if teamList[i].ID != "U3T10SMN1" && 
+		teamList[i].ID != "USLACKBOT" &&
+		teamList[i].Deleted != true  {
 			this_team_member.SlackID 		= teamList[i].ID
 			this_team_member.SlackName 		= teamList[i].Name
-			this_team_member.SlackAvatar 	= teamList[i].Profile.ImageOriginal
-			this_team_member.ProfileImage 	= teamList[i].Profile.ImageOriginal
+			this_team_member.SlackAvatar 	= teamList[i].Profile.Image192
+			this_team_member.ProfileImage 	= teamList[i].Profile.Image192
 			
 			teamMembers = append(teamMembers, this_team_member)
 		}

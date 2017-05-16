@@ -2,16 +2,18 @@ package xpnk_createGroupFromSlack
 
 import   (
 "testing"
+"strings"
 )
 
 func TestInvite(t *testing.T) {
 
 	var newinvite Slacker
-	//put your group's stuff here
-	//newinvite.Token 			= ""
-	//newinvite.Slacker  		= ""
-	//newinvite.SlackGroup    	= ""
-	//newinvite.XpnkGroup		= ""
+	
+	newinvite.Token 		= ""
+	newinvite.Slacker  		= ""
+	newinvite.SlackGroup    = ""
+	newinvite.XpnkGroup		= strings.Replace(newinvite.SlackGroup, " ", "-", -1)
+	newinvite.XpnkToken		= ""
 
 	v := Invite(newinvite)
 
