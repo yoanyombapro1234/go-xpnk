@@ -44,14 +44,18 @@ func CreateGroup(tokens SlackTeamTokens) string {
 	
 	fmt.Printf("\n==========\nNEW GROUP: \n%+v\n",newGroup)
 	
-	xpnk_insertGroup.InsertGroup(newGroup)
+	inserted 				:= xpnk_insertGroup.InsertGroup(newGroup)
+	
+	if inserted != "inserted" {
+		fmt.Printf("\n==========\nGroup with this name already exists %+v", inserted)
+	}
 	
 	//retrieve the group_id for the new group
 	dbmap 					:= db_connect.InitDb()
 	defer dbmap.Db.Close()
 	
 	var xpnk_groupID 		int
-	err 					:= dbmap.SelectOne(&xpnk_groupID, "SELECT Group_ID FROM GROUPS WHERE source='Slack' and source_id='" + newGroup.SourceID + " ' ")
+	err 					:= dbmap.SelectOne(&xpnk_groupID, "SELECT Group_ID FROM groups WHERE source='Slack' and source_id='" + newGroup.SourceID + " ' ")
 	if err == nil {
 	    fmt.Printf("\n==========\nXPNK_GROUPID: %+v", xpnk_groupID)
 	} else {
