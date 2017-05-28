@@ -63,7 +63,7 @@ func fetch_groupId (user_token string) int {
 	dbmap := db_connect.InitDb()
 	defer dbmap.Db.Close()
 
-	err := dbmap.SelectOne(&user_groupId, "SELECT group_id FROM group_tokens WHERE xpnk_token='" + user_token + " ' ")
+	err := dbmap.SelectOne(&user_groupId, "SELECT group_id FROM group_tokens WHERE xpnk_token=?",user_token)
 	if err == nil {
 		fmt.Printf("\n==========\nuser_groupId: %+v", user_groupId)
 		return_int = user_groupId
