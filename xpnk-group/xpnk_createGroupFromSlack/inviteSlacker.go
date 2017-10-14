@@ -15,6 +15,7 @@ import (
 
 type Slacker struct {
 	Token				string
+	TestToken			string
 	Slacker				string
 	SlackGroup			string
 	XpnkGroup			string
@@ -24,6 +25,7 @@ type Slacker struct {
 func Invite (slacker Slacker) string {
 
 	slacker_token			:= slacker.Token
+	test_token				:= slacker.TestToken
 	slacker_name 			:= "@"+slacker.Slacker
 	slacker_group 			:= slacker.SlackGroup
 	xpnk_group_name         := slacker.XpnkGroup
@@ -33,7 +35,15 @@ func Invite (slacker Slacker) string {
 	api := slack.New(slacker_token)
 	api.SetDebug(true)
 	
-	invite_url				:= "http://localhost:8000/XAPNIK/#/group/"+xpnk_group+"/slack-invite/?xpnk_tkn="+xpnk_token
+	var invite_domain		string
+	
+	if test_token != "true" {
+		invite_domain		= "https://xapnik.com/"
+	} else {
+		invite_domain		= "http://localhost:8100/"
+	}		
+	
+	invite_url				:= invite_domain+xpnk_group+"/slack-invite/?xpnk_tkn="+xpnk_token
 	
 	fmt.Printf("Invite url:   %s/n", invite_url)
 	
