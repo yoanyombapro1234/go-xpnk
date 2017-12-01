@@ -29,12 +29,14 @@ import (
 type SlackTeamTokens struct {
 	TeamToken				string				`form:"team_token" binding:"required"`
 	BotToken				string				`form:"bot_token"  binding:"required"`
+	TestToken				string				`form:"testMode"`
 } 
 
 func CreateGroup(tokens SlackTeamTokens) string {
 	
 	token 					:= tokens.TeamToken
 	bot_token 				:= tokens.BotToken
+	test_token				:= tokens.TestToken
 
 	groupInfo 				:= xpnk_getSlackGroup.GetSlackGroup(token)
 	
@@ -89,6 +91,7 @@ func CreateGroup(tokens SlackTeamTokens) string {
 	for i := 0; i <len(teammembers); i++ {
 		thisSlacker.Slacker 	= teammembers[i].SlackName
 		thisSlacker.Token		= bot_token
+		thisSlacker.TestToken	= test_token
 		thisSlacker.SlackGroup	= groupInfo.GroupName
 		thisSlacker.XpnkGroup	= xpnkGroupPath
 		thisSlacker.XpnkToken	= xpnk_auth.GetNewGroupToken("Slack", teammembers[i].SlackID)
