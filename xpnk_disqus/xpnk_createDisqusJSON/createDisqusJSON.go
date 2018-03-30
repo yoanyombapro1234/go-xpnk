@@ -70,7 +70,7 @@ func CreateDisqusJSON(group_id int) string {
 	* converting the group name into a string to use in the filename
 	******/
 	//get group name to use for the filename	
-	err := dbmap.SelectOne(&group_name, "SELECT `group_name` FROM `GROUPS` WHERE `Group_ID`=?", group_id)
+	err := dbmap.SelectOne(&group_name, "SELECT `group_name` FROM `groups` WHERE `Group_ID`=?", group_id)
 
 	if err != nil {fmt.Printf("There was an error ", err)}
 

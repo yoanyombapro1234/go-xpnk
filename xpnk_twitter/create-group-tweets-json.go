@@ -68,7 +68,7 @@ func Create_group_tweets_json() {
 		* converting the group name into a string to use in the filename
 		******/
 		//get group name to use for the filename	
-		err := dbmap.SelectOne(&group_name, "SELECT `group_name` FROM `GROUPS` WHERE `Group_ID`=?", this_group)
+		err := dbmap.SelectOne(&group_name, "SELECT `group_name` FROM `groups` WHERE `Group_ID`=?", this_group)
 	
 		if err != nil {fmt.Printf("There was an error ", err)}
 

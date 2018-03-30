@@ -36,6 +36,7 @@ func Invite (slacker Slacker) string {
 	api.SetDebug(true)
 	
 	var invite_domain		string
+	var invite_url			string
 	
 	if test_token != "true" {
 		invite_domain		= "https://xapnik.com/"
@@ -43,7 +44,12 @@ func Invite (slacker Slacker) string {
 		invite_domain		= "http://localhost:8100/"
 	}		
 	
-	invite_url				:= invite_domain+xpnk_group+"/slack-invite/?xpnk_tkn="+xpnk_token
+	if test_token != "true" {
+		invite_url			= invite_domain+xpnk_group+"/slack-invite/?xpnk_tkn="+xpnk_token
+	} else {
+		invite_url			= invite_domain+"/slack-invite/?xpnk_tkn="+xpnk_token+"&state=invite"+"&group="+xpnk_group
+	}
+
 	
 	fmt.Printf("Invite url:   %s/n", invite_url)
 	

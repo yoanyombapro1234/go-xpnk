@@ -326,6 +326,8 @@ func SlackCreateNewGroup (c *gin.Context) {
 	c.Bind(&team_tokens) 
 	fmt.Printf("TEAM TOKENS: %+v", team_tokens)
 	fmt.Printf("TOKEN ONLY:  %+v", team_tokens.TeamToken)
+	fmt.Printf("TEST MODE: %+v", team_tokens.TestToken)
+
 	
 	token = team_tokens.TeamToken
 	bot_token = team_tokens.BotToken
