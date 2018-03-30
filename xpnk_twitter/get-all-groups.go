@@ -22,7 +22,7 @@ func Get_Groups () []GroupID {
 	
 	//get all group ids from the GROUPS table	
 
-	_,err := dbmap.Select(&group_ids, "SELECT `Group_ID` FROM GROUPS")
+	_,err := dbmap.Select(&group_ids, "SELECT `Group_ID` FROM groups")
 	
 	if err != nil {fmt.Printf("There was an error ", err)}
 	
