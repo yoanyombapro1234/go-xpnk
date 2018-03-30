@@ -4,9 +4,13 @@ import (
          "github.com/gin-gonic/gin"
          "fmt"
          "net/http"
+         "encoding/json"
    		 _ "github.com/go-sql-driver/mysql"
    		 "database/sql"
+   		 //"io/ioutil"
    		 "strings"
+   		 "strconv"
+   		 "xpnk_constants"
    		 "xpnk_auth"
    		 "xpnk-user/xpnk_checkUserInvite"
    		 "xpnk-user/xpnk_createUserInsert"
@@ -14,24 +18,12 @@ import (
    		 "xpnk-user/xpnk_insertMultiUsers"
    		 "xpnk-shared/db_connect"
    		 "xpnk-group/xpnk_createGroupFromSlack"
+   		 "xpnk_slack"
  )
  
 type SlackTeamToken struct {
 	TeamToken			string					`form:"team_token" binding:"required"`
 	BotToken			string					`form:"bot_token"  binding:"required"`
-} 
- 
-type SlackCommand struct {
-	Token				string					`form:"token" binding:"required"`			
-	TeamID				string					`form:"team_id" binding:"required"`
-	TeamDomain			string					`form:"team_domain" binding:"required"`
-	ChannelID			string					`form:"channel_id" binding:"required"`
-	ChannelName			string					`form:"channel_name" binding:"required"`
-	UserID				string					`form:"user_id" binding:"required"`
-	UserName			string					`form:"user_name" binding:"required"`
-	Command				string					`form:"command" binding:"required"`
-	Text				string					`form:"text" binding:"required"`
-	ResponseURL			string					`form:"response_url" binding:"required"`
 } 
  
 type Usertoken struct {
@@ -85,7 +77,7 @@ type XPNKUser 			struct {
 	Insta_token			string		   `db:"insta_accesstoken"	json:"insta_accesstoken"`
 	Disqus_username		sql.NullString `db:"disqus_username"	json:"disqus_username"`
 	Disqus_userid		sql.NullString `db:"disqus_userid"		json:"disqus_userid"`
-	Disqus_token		string		 `db:"disqus_accesstoken"	json:"disqus_accesstoken"`
+	Disqus_token		string		   `db:"disqus_accesstoken"	json:"disqus_accesstoken"`
 	Profile_image		string		   `db:"profile_image"		json:"profile_image"`
 }
 
@@ -134,7 +126,7 @@ type NewDisqusAuthInsert struct {
 }
 
 const (
-	mySigningKey = ""
+	mySigningKey = "lakdjfiafjeoijaldknamnf823984udkafdjasdf"
 )
 	 
 
@@ -174,6 +166,24 @@ func main() {
  				c.Next()
 			})
 			v1.POST ("/slack_new_group", SlackCreateNewGroup)
+			
+			v1.OPTIONS ("/slack_response", func(c *gin.Context) {
+			    c.Writer.Header().Set("Access-Control-Allow-Methods", "POST, PUT")
+ 				c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, token, xpnkid")
+ 				c.Next()
+			})
+			v1.GET ("/slack_response", SlackResponseHandler)
+			v1.POST ("/slack_response", SlackResponseHandler)
+			
+			
+			v1.OPTIONS ("/slack_response/command", func(c *gin.Context) {
+			    c.Writer.Header().Set("Access-Control-Allow-Methods", "POST, PUT")
+ 				c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, token, xpnkid")
+ 				c.Next()
+			})
+			v1.GET ("/slack_response/command", SlackCommandHandler)
+			v1.POST ("/slack_response/command", SlackCommandHandler)
+			
 			
 			v1.OPTIONS ("/check_user_invite", func(c *gin.Context) {
 			    c.Writer.Header().Set("Access-Control-Allow-Methods", "POST, PUT")
@@ -327,7 +337,6 @@ func SlackCreateNewGroup (c *gin.Context) {
 	fmt.Printf("TEAM TOKENS: %+v", team_tokens)
 	fmt.Printf("TOKEN ONLY:  %+v", team_tokens.TeamToken)
 	fmt.Printf("TEST MODE: %+v", team_tokens.TestToken)
-
 	
 	token = team_tokens.TeamToken
 	bot_token = team_tokens.BotToken
@@ -340,19 +349,66 @@ func SlackCreateNewGroup (c *gin.Context) {
 	}
 }
 
-func SlackInviteGroup (c *gin.Context) {
-	var slack_command SlackCommand
-	c.Bind(&slack_command) 
-	fmt.Printf("SLACK COMMAND: %+v", slack_command)	
+func SlackResponseHandler (c *gin.Context) {
+    slack_response := c.PostForm("payload")
+    var slack_json map[string]interface{}
+    json.Unmarshal([]byte(slack_response), &slack_json)
+    var token string
+    var group_id string
+    var callback_id string
+    for key, value := range slack_json {
+    	switch key {
+    	    case "callback_id":
+                callback_id = value.(string)   
+    	}
+    }	
+    if callback_id != "" {
+    	s := strings.Split(callback_id, ",")
+    	if s[0] == "invites" {
+    		group_id = s[1]	
+    		token = s[2]
+    	} else {
+    		group_id = ""
+    	}
+    }
+    if group_id != "" && token != "" {
+        SlackInviteGroup(token, group_id)
+    }
+    
+    fmt.Printf("PAYLOAD: \n %s \n", string(slack_response))
+    fmt.Printf("group_id: \n %s \n", token)
+    fmt.Printf("slacker_token: \n %s \n", group_id)
+    //fmt.Printf("SLACK RESPONSE: \n %s \n", string(slack_response))
+    c.JSON(200, "Thanks!")
+}
+
+func SlackInviteGroup (token string, group_id string) {
+        groupID, err := strconv.Atoi(group_id)
+        if err != nil {
+                fmt.Printf("Couldn't convert group_id to string in api line 399.")
+        } else {
+            fmt.Printf("I'm inviting the group!")
+            xpnk_createGroupFromSlack.InviteGroup (token, groupID)
+        }
+}
+
+func SlackCommandHandler (c *gin.Context) {
+    fmt.Printf("GIN CONTEXT:  %+v", c)
+	var command_body xpnk_slack.SlackCommand
+	var token string
+	c.Bind(&command_body) 
+	fmt.Printf("COMMAND BODY: %+v", command_body)
 	
-	if slack_command.Token == "" {
-		c.JSON(200, "Well hello, Slack friend! I'm sending invitations to your team (including you!) with instructions on how join your new Xapnik group.")
-		//get a team token from slack
-		//send the team token to createGroupFromSlack.CreateGroup
+	token = command_body.Token
+
+	if token != "" && token == xpnk_constants.SlackCommandTkn { 
+	xpnk_slack.SlackGroupStatus(command_body)
+	c.JSON(200, "Well hello, Slack friend! You're cleared for takeoff. Here's your webhook: "+command_body.ResponseURL)
 	} else {
 		c.JSON(422, gin.H{"error":"I'm sorry, I seem to have lost my mind."})
 	}
 }
+
 func CheckUserInvite (c *gin.Context) {
 	var user_invite			NewUserInvite
 	var user_invite_check	xpnk_checkUserInvite.GroupObj
@@ -869,7 +925,7 @@ func getGroupID (groupName string) int{
 	dbmap 					:= db_connect.InitDb()
 	defer dbmap.Db.Close()
 	
-	err := dbmap.SelectOne(&groupID, "SELECT Group_ID FROM GROUPS WHERE group_name=?", group_name)
+	err := dbmap.SelectOne(&groupID, "SELECT Group_ID FROM groups WHERE group_name=?", group_name)
 	
 	if err == nil {
 		return groupID
