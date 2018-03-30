@@ -9,16 +9,16 @@ func TestSlackGroupStatus(t *testing.T) {
 
 	var 	thisCommand		SlackCommand
 	
-	thisCommand.Token		= "BCx5C0HMEmWfcpPjxw637Wkt"
-	thisCommand.TeamID		= "T3R3D2ERW"
+	thisCommand.Token		= ""
+	thisCommand.TeamID		= ""
 	thisCommand.TeamDomain	= ""		
 	thisCommand.ChannelID	= ""
 	thisCommand.ChannelName	= ""
-	thisCommand.UserID		= "U066LDRB7"
-	thisCommand.UserName	= "mspseudolus"
+	thisCommand.UserID		= ""
+	thisCommand.UserName	= ""
 	thisCommand.Command		= "/xapnik"
 	thisCommand.Text		= ""
-	thisCommand.ResponseURL	= "https://hooks.slack.com/commands/1234/5678"
+	thisCommand.ResponseURL	= ""
 	thisCommand.TriggerID	= ""
 	
 	v 			:= SlackGroupStatus(thisCommand)
