@@ -931,7 +931,7 @@ func getGroupID (groupName string) int{
 	dbmap 					:= db_connect.InitDb()
 	defer dbmap.Db.Close()
 	
-	err := dbmap.SelectOne(&groupID, "SELECT Group_ID FROM groups WHERE group_name=?", group_name)
+	err := dbmap.SelectOne(&groupID, "SELECT Group_ID FROM GROUPS WHERE group_name=?", group_name)
 	
 	if err == nil {
 		return groupID
