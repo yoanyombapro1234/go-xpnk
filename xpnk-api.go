@@ -19,49 +19,50 @@ import (
    		 "xpnk-shared/db_connect"
    		 "xpnk-group/xpnk_createGroupFromSlack"
    		 "xpnk_slack"
+   		 "xpnk_stats"
  )
  
 type SlackTeamToken struct {
-	TeamToken			string					`form:"team_token" binding:"required"`
-	BotToken			string					`form:"bot_token"  binding:"required"`
+	TeamToken			string		`form:"team_token" binding:"required"`
+	BotToken			string		`form:"bot_token"  binding:"required"`
 } 
  
 type Usertoken struct {
-	Token				string					`json:"token"`
+	Token				string		`json:"token"`
 } 
 
 type Slack_ID struct {
-	Slack_id			string					`json:"slack_id"`
+	Slack_id			string		`json:"slack_id"`
 }
  
 type NewSlackAuth struct {
-	 Slack_accesstoken	string					`json:"access_token"`
-	 Slack_userid		string					`json:"slack_userid"`
-	 Slack_username		string					`json:"slack_name"`
-	 Slack_avatar		string					`json:"slack_avatar"`
+	 Slack_accesstoken	string		`json:"access_token"`
+	 Slack_userid		string		`json:"slack_userid"`
+	 Slack_username		string		`json:"slack_name"`
+	 Slack_avatar		string		`json:"slack_avatar"`
 }
 
 type NewSlackAuthInsert struct {
-	 Slack_accesstoken	string					`db:"slack_authtoken"`
-	 Slack_userid		string					`db:"slack_userid"`
-	 Slack_username		string					`db:"slack_name"`
-	 Slack_avatar		string					`db:"profile_image"`
-	 Xpnk_id			int						`db:"user_ID"`
+	 Slack_accesstoken	string		`db:"slack_authtoken"`
+	 Slack_userid		string		`db:"slack_userid"`
+	 Slack_username		string		`db:"slack_name"`
+	 Slack_avatar		string		`db:"profile_image"`
+	 Xpnk_id			int			`db:"user_ID"`
 }
 
 type NewUserInvite 		struct {
-	Xpnk_token			string					`form:"xpnk_token" binding:"required"`
-	Group_name			string					`form:"xpnk_group_name" binding:"required"`
+	Xpnk_token			string		`form:"xpnk_token" binding:"required"`
+	Group_name			string		`form:"xpnk_group_name" binding:"required"`
 }
 
 type NewGroupMember		struct {
-	Group_ID			int						`json:"id"`
-	User_ID				int						`json:"userId"`				
+	Group_ID			int			`json:"id"`
+	User_ID				int			`json:"userId"`				
 }
 
 type NewGroupMemberInsert	struct {
-	Group_ID			int						`db:"Group_ID"`
-	User_ID				int						`db:"user_ID"`				
+	Group_ID			int			`db:"Group_ID"`
+	User_ID				int			`db:"user_ID"`				
 }
 
 type XPNKUser 			struct {
@@ -82,47 +83,47 @@ type XPNKUser 			struct {
 }
 
 type TwitterID struct {
-	 Twttr_userid		string					`form:"id" binding:"required"`
+	 Twttr_userid		string			`form:"id" binding:"required"`
 }
 
 type NewTwitterAuth struct {
-	 Twttr_userid		string					`json:"twitter_userid"`
+	 Twttr_userid		string			`json:"twitter_userid"`
 }
 
 /*
 type NewTwitterAuthInsert struct {
-	 Twttr_accesstoken	string					`db:"twitter_authtoken"`
-	 Twttr_secret		string					`db:"twitter_secret"`
-	 Twttr_userid		string					`db:"twitter_ID"`
-	 Twttr_username		string					`db:"twitter_user"`
-	 Xpnk_id			string					`db:"user_ID"`
+	 Twttr_accesstoken	string			`db:"twitter_authtoken"`
+	 Twttr_secret		string			`db:"twitter_secret"`
+	 Twttr_userid		string			`db:"twitter_ID"`
+	 Twttr_username		string			`db:"twitter_user"`
+	 Xpnk_id			string			`db:"user_ID"`
 }
 */
 
 type IGID struct {
-	 IG_userid			string					`form:"id" binding:"required"`
+	 IG_userid			string			`form:"id" binding:"required"`
 }
 /*
 type NewIGAuthInsert struct {
-	 Insta_accesstoken	string					`db:"insta_accesstoken"`
-	 Insta_userid		string					`db:"insta_userid"`
-	 Insta_username		string					`db:"insta_user"`
-	 Xpnk_id			string					`db:"user_ID"`
+	 Insta_accesstoken	string			`db:"insta_accesstoken"`
+	 Insta_userid		string			`db:"insta_userid"`
+	 Insta_username		string			`db:"insta_user"`
+	 Xpnk_id			string			`db:"user_ID"`
 }
 */
 
 type NewDisqusAuth struct {
-	 Disqus_accesstoken	string					`json:"access_token"`
-	 Disqus_userid		string					`json:"disqus_userid"`
-	 Disqus_username	string					`json:"disqus_username"`
+	 Disqus_accesstoken	string			`json:"access_token"`
+	 Disqus_userid		string			`json:"disqus_userid"`
+	 Disqus_username	string			`json:"disqus_username"`
 	 Xpnk_id			string
 }
 
 type NewDisqusAuthInsert struct {
-	 Disqus_accesstoken	string					`db:"disqus_accesstoken"`
-	 Disqus_userid		string					`db:"disqus_userid"`
-	 Disqus_username	string					`db:"disqus_username"`
-	 Xpnk_id			string					`db:"user_ID"`
+	 Disqus_accesstoken	string			`db:"disqus_accesstoken"`
+	 Disqus_userid		string			`db:"disqus_userid"`
+	 Disqus_username	string			`db:"disqus_username"`
+	 Xpnk_id			string			`db:"user_ID"`
 }
 
 const (
@@ -157,7 +158,7 @@ func main() {
  				c.Next()
 			})
 			v1.GET ("/ping", func(c *gin.Context) {
-				c.String(200, "Hello there.")
+				c.String(200, "pong")
 			})
 						
 			v1.OPTIONS ("/slack_new_group", func(c *gin.Context) {
@@ -402,12 +403,17 @@ func SlackCommandHandler (c *gin.Context) {
 	token = command_body.Token
 
 	if token != "" && token == xpnk_constants.SlackCommandTkn { 
-	xpnk_slack.SlackGroupStatus(command_body)
-	c.JSON(200, "Well hello, Slack friend! You're cleared for takeoff. Here's your webhook: "+command_body.ResponseURL)
-	} else {
-		c.JSON(422, gin.H{"error":"I'm sorry, I seem to have lost my mind."})
+		var response xpnk_stats.GroupStats
+		response = xpnk_slack.SlackGroupStatus(command_body)
+		responseJSON, err := json.Marshal(response)
+		if err != nil {
+			c.JSON(422, gin.H{"error":"I'm sorry, I seem to have lost my mind."})
+		} else {
+			fmt.Printf("Response: %+v", response)
+			c.JSON(200, responseJSON)
+		}
 	}
-}
+}	
 
 func CheckUserInvite (c *gin.Context) {
 	var user_invite			NewUserInvite
