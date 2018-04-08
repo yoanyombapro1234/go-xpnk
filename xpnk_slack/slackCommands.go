@@ -71,7 +71,7 @@ func SlackGroupStatus(slack_command SlackCommand) string{
 	
 	fmt.Printf("\nSLACK WEBHOOK RESPONSE:  %+s\n", resp)
 	
-	response := "Great job! Get out there and beat the bots."	
+	response := Great job! Get out there and beat the bots.	
 	
 	return response
 	
