@@ -19,7 +19,6 @@ import (
    		 "xpnk-shared/db_connect"
    		 "xpnk-group/xpnk_createGroupFromSlack"
    		 "xpnk_slack"
-   		 "xpnk_stats"
  )
  
 type SlackTeamToken struct {
@@ -403,15 +402,10 @@ func SlackCommandHandler (c *gin.Context) {
 	token = command_body.Token
 
 	if token != "" && token == xpnk_constants.SlackCommandTkn { 
-		var response xpnk_stats.GroupStats
+		var response string
 		response = xpnk_slack.SlackGroupStatus(command_body)
-		responseJSON, err := json.Marshal(response)
-		if err != nil {
-			c.JSON(422, gin.H{"error":"I'm sorry, I seem to have lost my mind."})
-		} else {
-			fmt.Printf("Response: %+v", response)
-			c.JSON(200, responseJSON)
-		}
+		fmt.Printf("\nAPI Response: %+v\n", response)
+		c.JSON(200, response)
 	}
 }	
 
