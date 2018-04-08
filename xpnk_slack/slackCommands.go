@@ -4,6 +4,7 @@ import (
 "net/http"
 "fmt"
 "strings"
+"strconv"
 _ "github.com/go-sql-driver/mysql"
 "xpnk_stats"
 "xpnk-shared/db_connect"
@@ -28,17 +29,34 @@ type XpnkTeam struct {
 	GroupName			string			`db:"group_name"`
 }
 	
-func SlackGroupStatus(slack_command SlackCommand) xpnk_stats.GroupStats{
+func SlackGroupStatus(slack_command SlackCommand) string{
 
-	webhook				:= slack_command.ResponseURL	
-	body				:= strings.NewReader(`{"text": "Hi there, "+slack_command.UserName}`)
+	var stats xpnk_stats.GroupStats
+	var statsText string
+
 	teamSlackID			:= slack_command.TeamID
-	
 	var xpnkTeam XpnkTeam
 	xpnkTeam			= GetGroupPosts(teamSlackID, "slack")
+	stats				= xpnk_stats.GetStats(xpnkTeam.GroupID, xpnkTeam.GroupName)
 	
-	response			:= xpnk_stats.GetStats(xpnkTeam.GroupID, xpnkTeam.GroupName)
+	groupName			:=	stats.GroupName
+	groupURL			:=	stats.GroupURL
+	groupStats			:=	stats.Stats
+	statsText 			= StringifyStats(groupStats)
+	fmt.Printf("groupStats: %+s", groupStats)
+		
+	responseObject	 	:= strings.NewReader(`{
+		"response_type": "ephemeral",      
+		"text": "Here are `+groupName+` team's social media stats for the last 24 hours:",
+		"attachments": [
+			{  
+				"text": "`+statsText+`\n You can see your team's activity and boost them by following this link:\n `+groupURL+`"
+			}
+		]
+	}`)
 	
+	webhook				:= slack_command.ResponseURL	
+	body				:= responseObject
 	req, err := http.NewRequest("POST", webhook, body)
 	if err != nil {
 		fmt.Printf("There was an error creating the request:  %s\n", err)
@@ -51,7 +69,9 @@ func SlackGroupStatus(slack_command SlackCommand) xpnk_stats.GroupStats{
 	}
 	defer resp.Body.Close()
 	
-	fmt.Printf("/nSLACK WEBHOOK RESPONSE:  %+s/n", resp)
+	fmt.Printf("\nSLACK WEBHOOK RESPONSE:  %+s\n", resp)
+	
+	response := "Trying the webhook..."	
 	
 	return response
 	
@@ -75,7 +95,13 @@ func GetGroupPosts (teamSlackID string, source string) XpnkTeam{
 	} else {
 		fmt.Printf("\n==========\n GetGroupPosts - Problemz with getting group_name for group in slackCommands line 54: \n%+v\n",err)
 		return groupInfo
-	}
-	
-	
+	}	
+}
+
+func StringifyStats(group_stats []xpnk_stats.MemberStats) string {
+    statsString := ""
+    for _, elem := range group_stats {
+        statsString += elem.SlackName+": "+strconv.Itoa(elem.Tweets)+" tweets, "+strconv.Itoa(elem.IGs)+" Instagrams, "+strconv.Itoa(elem.Comments)+" comments.\n"
+    }
+    return statsString
 }
