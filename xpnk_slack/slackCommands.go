@@ -71,7 +71,7 @@ func SlackGroupStatus(slack_command SlackCommand) string{
 	
 	fmt.Printf("\nSLACK WEBHOOK RESPONSE:  %+s\n", resp)
 	
-	response := "Trying the webhook..."	
+	response := "Great job! Get out there and beat the bots."	
 	
 	return response
 	
@@ -82,7 +82,7 @@ func GetGroupPosts (teamSlackID string, source string) XpnkTeam{
 	dbmap 					:= db_connect.InitDb()
 	defer dbmap.Db.Close()
 	
-	err := dbmap.SelectOne(&groupInfo, "SELECT `group_name`, `Group_ID` FROM groups WHERE source=? AND source_id=?", source, teamSlackID)
+	err := dbmap.SelectOne(&groupInfo, "SELECT `group_name`, `Group_ID` FROM GROUPS WHERE source=? AND source_id=?", source, teamSlackID)
 	
 	if err == nil {
 		//convert the group name into a hyphenated string for use in json filename
@@ -93,7 +93,7 @@ func GetGroupPosts (teamSlackID string, source string) XpnkTeam{
 		
 		return groupInfo
 	} else {
-		fmt.Printf("\n==========\n GetGroupPosts - Problemz with getting group_name for group in slackCommands line 54: \n%+v\n",err)
+		fmt.Printf("\n==========\n GetGroupPosts - Problemz with getting group_name for group in slackCommands line 85: \n%+v\n",err)
 		return groupInfo
 	}	
 }

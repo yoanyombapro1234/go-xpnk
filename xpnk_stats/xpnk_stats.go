@@ -102,7 +102,7 @@ func GetSocialIDs (userID int) GroupMember {
 	
 	var socialHandles GroupMember
 	
-	err := dbmap.SelectOne(&socialHandles, "SELECT `user_ID`,`slack_name`,`twitter_ID`,`insta_userid`,`disqus_userid` FROM users WHERE user_ID=?", userID)
+	err := dbmap.SelectOne(&socialHandles, "SELECT `user_ID`,`slack_name`,`twitter_ID`,`insta_userid`,`disqus_userid` FROM USERS WHERE user_ID=?", userID)
 	
 	if err == nil {
 		return socialHandles
@@ -118,7 +118,7 @@ func GetTweetCount(twitterID string) int{
 	
 	var tweetCount int
 	
-	err := dbmap.SelectOne(&tweetCount, "SELECT COUNT(*) FROM tweets WHERE twitter_ID=?", twitterID)
+	err := dbmap.SelectOne(&tweetCount, "SELECT COUNT(*) FROM TWEETS WHERE twitter_ID=?", twitterID)
 	
 	if err == nil {
 		return tweetCount

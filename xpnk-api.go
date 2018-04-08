@@ -404,7 +404,6 @@ func SlackCommandHandler (c *gin.Context) {
 	if token != "" && token == xpnk_constants.SlackCommandTkn { 
 		var response string
 		response = xpnk_slack.SlackGroupStatus(command_body)
-		fmt.Printf("\nAPI Response: %+v\n", response)
 		c.JSON(200, response)
 	}
 }	
