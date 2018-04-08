@@ -86,7 +86,7 @@ func GetGroupMembers (groupID int) []int{
 	
 	var groupMembers []int
 	
-	_, err := dbmap.Select(&groupMembers, "SELECT user_ID FROM user_groups WHERE Group_ID=?", groupID)
+	_, err := dbmap.Select(&groupMembers, "SELECT user_ID FROM USER_GROUPS WHERE Group_ID=?", groupID)
 	
 	if err == nil {
 		return groupMembers
