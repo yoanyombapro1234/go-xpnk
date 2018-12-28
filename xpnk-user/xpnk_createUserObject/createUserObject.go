@@ -1,4 +1,4 @@
-package xpnk_createUserInsert
+package xpnk_createUserObject
 
 /**************************************************************************************
 Takes a generic User struct and prepares it for insertion into the USERS table
@@ -10,7 +10,8 @@ import (
 )
 
 //the one User struct to rule them all
-type User_Insert struct {
+type User_Object struct {
+	Id					int		`db:"user_ID"`				
 	SlackName			string		`db:"slack_name"			json:"SlackName"`
 	SlackID				string		`db:"slack_userid"			json:"SlackID"`
 	SlackAvatar			string		`db:"slack_avatar"			json:"SlackAvatar"`
@@ -30,34 +31,32 @@ type User_Insert struct {
 	ProfileImage		string		`db:"profile_image"			json:"ProfileImage"`
 }
 
-func CreateUserInsert(newUser User_Insert) User_Insert {
-//func CreateUserInsert(newUser User_Insert) string {
-
-		var this_user_insert User_Insert
+func CreateUserObject(newUser User_Object) User_Object {
+		var this_user_object User_Object
 		
 		strippedProfileImage 				:= stripUrlScheme(newUser.ProfileImage)
 		
-		this_user_insert.SlackName			= newUser.SlackName
-		this_user_insert.SlackID			= newUser.SlackID
-		this_user_insert.SlackAvatar	 	= newUser.SlackAvatar
-		this_user_insert.TwitterUser	 	= newUser.TwitterUser
-		this_user_insert.TwitterID		 	= newUser.TwitterID
-		this_user_insert.TwitterToken		= newUser.TwitterToken
-		this_user_insert.LastTweet		 	= newUser.LastTweet
-		this_user_insert.InstaUser		 	= newUser.InstaUser
-		this_user_insert.InstaUserID	 	= newUser.InstaUserID
-		this_user_insert.InstaAccessToken	= newUser.InstaAccessToken
-		this_user_insert.DisqusUserName	 	= newUser.DisqusUserName
-		this_user_insert.DisqusUserID	 	= newUser.DisqusUserID
-		this_user_insert.DisqusAccessToken	= newUser.DisqusAccessToken
-		this_user_insert.DisqusRefreshToken = newUser.DisqusRefreshToken
-		this_user_insert.FirstName		 	= newUser.FirstName
-		this_user_insert.LastName		 	= newUser.LastName
-		this_user_insert.ProfileImage	 	= strippedProfileImage		
+		this_user_object.SlackName			= newUser.SlackName
+		this_user_object.SlackID			= newUser.SlackID
+		this_user_object.SlackAvatar	 	= newUser.SlackAvatar
+		this_user_object.TwitterUser	 	= newUser.TwitterUser
+		this_user_object.TwitterID		 	= newUser.TwitterID
+		this_user_object.TwitterToken		= newUser.TwitterToken
+		this_user_object.LastTweet		 	= newUser.LastTweet
+		this_user_object.InstaUser		 	= newUser.InstaUser
+		this_user_object.InstaUserID	 	= newUser.InstaUserID
+		this_user_object.InstaAccessToken	= newUser.InstaAccessToken
+		this_user_object.DisqusUserName	 	= newUser.DisqusUserName
+		this_user_object.DisqusUserID	 	= newUser.DisqusUserID
+		this_user_object.DisqusAccessToken	= newUser.DisqusAccessToken
+		this_user_object.DisqusRefreshToken = newUser.DisqusRefreshToken
+		this_user_object.FirstName		 	= newUser.FirstName
+		this_user_object.LastName		 	= newUser.LastName
+		this_user_object.ProfileImage	 	= strippedProfileImage		
 						
-		fmt.Printf("\n==========\nTHIS_USEr_INSERT: \n%+v\n",this_user_insert)
+		fmt.Printf("\n==========\nTHIS_USER_OBJECT: \n%+v\n",this_user_object)
 		
-		return this_user_insert
+		return this_user_object
 }
 
 func stripUrlScheme (img_url string) string {

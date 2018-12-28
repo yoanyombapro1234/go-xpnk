@@ -38,9 +38,14 @@ func UpdateUser(userupdate User_Update) int64{
 	dbmap.AddTableWithName(User_Update{}, "USERS").SetKeys(true, "user_ID")
 	
 	count, err := dbmap.Update(&userupdate)
-	if err != nil {fmt.Printf("\n==========\nUPDATE DIDN'T WORK: \n%+v\n", err)
+	if err != nil {
+		fmt.Printf("\n==========\nUPDATE DIDN'T WORK: \n%+v\n", err)
 		checkErr(err, "\nupdateUser couldn't update the db:")
-		return 0} else {return count}
+		return 0
+	} else {
+		fmt.Printf("\n==========\nuserupdate returned: \n%+v\n", count)
+		return 1
+	}
 } 
 
 func checkErr(err error, msg string) {

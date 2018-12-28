@@ -7,13 +7,14 @@ import (
          "encoding/json"
    		 _ "github.com/go-sql-driver/mysql"
    		 "database/sql"
-   		 //"io/ioutil"
    		 "strings"
    		 "strconv"
+   		 "reflect"
    		 "xpnk_constants"
    		 "xpnk_auth"
    		 "xpnk-user/xpnk_checkUserInvite"
-   		 "xpnk-user/xpnk_createUserInsert"
+   		 "xpnk-user/xpnk_createUserInsert" //v.1 to be deprecated
+   		 "xpnk-user/xpnk_createUserObject"
    		 "xpnk-user/xpnk_updateUser"
    		 "xpnk-user/xpnk_insertMultiUsers"
    		 "xpnk-shared/db_connect"
@@ -81,6 +82,23 @@ type XPNKUser 			struct {
 	Profile_image		string		   `db:"profile_image"		json:"profile_image"`
 }
 
+type UserGroups 		struct {
+	Xpnk_id				string			`db:"user_ID"			json:"user_ID"`
+	Groups				[]GroupsByUser
+}
+
+type GroupsByUser		struct {
+	Group_ID			int
+	Owner				bool
+	Admin				bool
+}
+
+type GroupOwner 		struct {
+	Group_ID			int				`db:"Group_ID"			json:"Group_ID"`
+	Owner				sql.NullBool	`db:"group_owner"		json:"group_owner"`
+	Admin				sql.NullBool	`db:"group_admin"		json:"group_admin"`		
+}
+
 type TwitterID struct {
 	 Twttr_userid		string					`form:"id" binding:"required"`
 }
@@ -128,12 +146,20 @@ type NewDisqusAuthInsert struct {
 const (
 	mySigningKey = ""
 )
+
+type Person struct {
+	ID        uint   `json:"id"`
+	FirstName string `json:"firstname"`
+	LastName  string `json:"lastname"`
+}
+
 	 
 
 func main() {
 
 	r := gin.Default()
 	r.Use(Cors())
+	r.Static("api/v1/data", "./xpnk-data/")
 	
 /*****************************************
 *
@@ -148,6 +174,76 @@ func main() {
     r.POST("/ping", func(c *gin.Context) {
         c.String(200, "Hello")
       })    
+      
+    v2 := r.Group("api/v2")
+		{  
+			v2.OPTIONS ("/ping", func(c *gin.Context) {
+				c.Writer.Header().Set("Access-Control-Allow-Methods", "POST, PUT")
+ 				c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+ 				c.Next()
+			})
+			v2.GET ("/ping", func(c *gin.Context) {
+				c.String(200, "pong")
+			})
+			
+			v2.OPTIONS ("/users/twitter/:id", func(c *gin.Context) {
+				c.Writer.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT")
+ 				c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, id, xpnkid, token")
+ 				c.Next()
+			})
+			v2.GET("/users/twitter/:id", UsersByTwitterID_2)
+			
+			v2.OPTIONS ("/users/ig/:id", func(c *gin.Context) {
+				c.Writer.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT")
+ 				c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, id, xpnkid, token")
+ 				c.Next()
+			})
+			v2.GET("/users/ig/:id", UsersByIGID_2)
+			
+			v2.OPTIONS ("/users/invite", func(c *gin.Context) {
+			    c.Writer.Header().Set("Access-Control-Allow-Methods", "POST, PUT")
+ 				c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, token, xpnkid")
+ 				c.Next()
+			})
+			v2.GET ("/users/invite", CheckUserInvite)
+			
+			v2.OPTIONS ("/users/authSet", func(c *gin.Context) {
+				c.Writer.Header().Set("Access-Control-Allow-Methods", "POST, PUT")
+ 				c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, token, xpnkid")
+ 				c.Next()
+			})
+			v2.GET ("/users/authSet", XPNKAuthSet)
+			
+			v2.GET ("/users/groups/:id", GetUserGroups)
+			
+			v2.OPTIONS ("/users/authCheck", func(c *gin.Context) {
+				c.Writer.Header().Set("Access-Control-Allow-Methods", "POST, PUT")
+ 				c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, token, xpnkid")
+ 				c.Next()
+			})
+			v2.POST ("/users/authCheck", XPNKAuthCheck)
+			
+			v2.OPTIONS ("/users", func(c *gin.Context) {
+				c.Writer.Header().Set("Access-Control-Allow-Methods", "POST, PUT")
+ 				c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, id, xpnkid, token")
+ 				c.Next()
+			})
+			v2.POST("/users", UsersNew_2)
+			
+			v2.PUT("/users/:id", UsersUpdate_2)
+			
+			v2.OPTIONS ("/groups/:id/members", func(c *gin.Context) {
+				c.Writer.Header().Set("Access-Control-Allow-Methods", "PUT")
+ 				c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, token, xpnkid")
+ 				c.Next()
+			})
+			v2.GET ("/groups/:id/members", GroupsByID)
+			
+		}
+
+/*****************************************
+* V1
+*****************************************/
 	
 	v1 := r.Group("api/v1")
 		{
@@ -157,7 +253,7 @@ func main() {
  				c.Next()
 			})
 			v1.GET ("/ping", func(c *gin.Context) {
-				c.String(200, "Hello there.")
+				c.String(200, "pong")
 			})
 						
 			v1.OPTIONS ("/slack_new_group", func(c *gin.Context) {
@@ -328,6 +424,139 @@ func Cors() gin.HandlerFunc {
 * 
 *****************************************/
 
+/*****************************************
+* V2
+*****************************************/
+
+func UsersByTwitterID_2 (c *gin.Context) {
+	twitter_id					:= c.Param("id")
+	var user					XPNKUser 	
+	var err_msg					error		
+	fmt.Printf("twitter_id:  %v \n", twitter_id)
+	if twitter_id == "" {
+		c.JSON(422, gin.H{"error": "Invalid or missing Twitter user ID."})
+	} else {
+		user, err_msg 			= get_user_by_twitter(twitter_id)
+		if user.Twitter_ID != twitter_id {
+			c.JSON(400, err_msg.Error())
+		} else {
+			c.JSON(200, user)
+		}
+	}
+}
+
+func UsersByIGID_2 (c *gin.Context) {
+	ig_ID					 := c.Param("id")
+	var user					XPNKUser
+	var err_msg					error
+	if ig_ID == "" {
+		c.JSON(422, gin.H{"error": "Invalid or missing Twitter user ID."})
+	} else {
+		user, err_msg 		  = get_user_by_ig(ig_ID)
+		if user.Insta_userid != ig_ID {
+			c.JSON(400, err_msg.Error())
+		} else {
+			c.JSON(200, user)
+		}
+	}
+}
+
+func GetUserGroups (c *gin.Context) { 
+	var groups					[]GroupOwner
+	var group_trim				GroupsByUser
+	var	groups_trim				[]GroupsByUser
+	var user_groups				UserGroups
+	var err_msg					error
+	var err						error
+	user_id						:= c.Params.ByName("id")
+	if err != nil {
+			c.JSON(400, err.Error())
+			return
+	}
+	if user_id == "" {
+		c.JSON(422, gin.H{"error": "Invalid or missing user ID."})
+		return
+	} else {
+		groups, err_msg 		  = get_user_groups(user_id)
+		if err_msg != nil {
+			c.JSON(400, gin.H{"error": "get_user_groups threw an error"})
+			c.JSON(400, err_msg.Error())
+		} else {	
+			for i := 0; i < len(groups); i++ {
+				var this_group GroupOwner
+				this_group = groups[i]
+				group_trim.Group_ID 	= this_group.Group_ID
+				group_trim.Owner 		= this_group.Owner.Bool
+				group_trim.Admin		= this_group.Admin.Bool
+				groups_trim 			= append(groups_trim, group_trim)
+			}	
+			user_groups.Xpnk_id   = user_id
+			user_groups.Groups 	  = groups_trim
+			c.JSON(200, user_groups)
+		}
+	}
+} 
+
+func UsersNew_2 (c *gin.Context) {
+	var newUser					xpnk_createUserObject.User_Object
+	var err_msg					error
+	c.Bind(&newUser)
+	fmt.Printf("newUser to add:  %+v \n", newUser)
+	if newUser.TwitterID == "" && newUser.InstaUserID == "" {
+		c.JSON(400, "Need either a Twitter user ID or a Instagram user ID to create a new user.")
+		return
+	}
+	var userInsert				[]xpnk_createUserObject.User_Object
+	userInsert 				 =  append(userInsert, newUser)
+	
+	newID, err_msg 			:=  xpnk_insertMultiUsers.InsertMultiUsers_2(userInsert)
+	if err_msg != nil {
+		c.JSON(400, err_msg.Error())	
+	} else {
+		c.JSON(200, newID)
+	}
+}
+
+func UsersUpdate_2(c *gin.Context) {
+
+	var thisUser xpnk_createUserObject.User_Object
+	var err_msg error
+	id, err := strconv.Atoi(c.Params.ByName("id"))
+	if err != nil {
+		fmt.Printf("\nError:  %+v \n", err) 
+		c.JSON(400, err)
+		return
+	}	
+	c.BindJSON(&thisUser)
+	if thisUser.InstaUserID == "" && thisUser.TwitterID == "" {
+		fmt.Printf("You must send either an InstaUserID or TwitterID param, or both. If you passed an int value for either, please change it to a string.")
+		c.JSON(400, "You must send either an InstaUserID or TwitterID param, or both. If you passed an int value for either, please change it to a string.")	
+		return
+	}
+		
+	if (reflect.TypeOf(thisUser.InstaUserID).String()) != "string" || (reflect.TypeOf(thisUser.TwitterID).String()) != "string" {
+		c.JSON(400, "TwitterID and InstaUserID values must be strings. Please check.")
+		return
+	}
+	
+	thisUser.Id = id
+	
+	update_thisUser, err_msg 	:=  xpnk_updateUser.UpdateUser_2(thisUser)
+	if err_msg != nil {
+		fmt.Printf(err_msg.Error())
+		c.JSON(400, err_msg.Error())
+		return
+	}
+	
+	if update_thisUser == 1 {
+		fmt.Printf("\nthisUser updated:  %+v \n ID: %n\n", thisUser, id)
+		c.JSON(200, thisUser)
+	}
+}
+
+/*****************************************
+* V1
+*****************************************/
 func SlackCreateNewGroup (c *gin.Context) {
 	fmt.Printf("GIN CONTEXT:  %+v", c)
 	var team_tokens xpnk_createGroupFromSlack.SlackTeamTokens
@@ -345,7 +574,7 @@ func SlackCreateNewGroup (c *gin.Context) {
 	c.JSON(200, "Well hello, Slack friend! I'll set up your Xapnik group and send the team invitations when it's ready.")
 		xpnk_createGroupFromSlack.CreateGroup(team_tokens)
 	} else {
-		c.JSON(422, gin.H{"error":"I'm sorry, I seem to have lost my mind."})
+		c.JSON(422, gin.H{"error":"I'm sorry, I can't see either or both of the token parameters."})
 	}
 }
 
@@ -356,6 +585,7 @@ func SlackResponseHandler (c *gin.Context) {
     var token string
     var group_id string
     var callback_id string
+    var test_mode string
     for key, value := range slack_json {
     	switch key {
     	    case "callback_id":
@@ -367,13 +597,14 @@ func SlackResponseHandler (c *gin.Context) {
     	if s[0] == "invites" {
     		group_id = s[1]	
     		token = s[2]
+    		test_mode = s[3]
     	} else {
     		group_id = ""
     	}
     }
     if group_id != "" && token != "" {
-        SlackInviteGroup(token, group_id)
-    }
+        SlackInviteGroup(token, group_id, test_mode)
+    } 
     
     fmt.Printf("PAYLOAD: \n %s \n", string(slack_response))
     fmt.Printf("group_id: \n %s \n", token)
@@ -382,13 +613,18 @@ func SlackResponseHandler (c *gin.Context) {
     c.JSON(200, "Thanks!")
 }
 
-func SlackInviteGroup (token string, group_id string) {
+func SlackInviteGroup (token string, group_id string, test_mode string) {
         groupID, err := strconv.Atoi(group_id)
         if err != nil {
                 fmt.Printf("Couldn't convert group_id to string in api line 399.")
         } else {
-            fmt.Printf("I'm inviting the group!")
-            xpnk_createGroupFromSlack.InviteGroup (token, groupID)
+        	if test_mode == "false" || test_mode == "" {
+				fmt.Printf("I'm inviting the group!")
+				xpnk_createGroupFromSlack.InviteGroup (token, groupID, "false")
+			} else if test_mode == "true" {
+				fmt.Printf("I'm inviting the group!")
+				xpnk_createGroupFromSlack.InviteGroup (token, groupID, "true")
+			}	
         }
 }
 
@@ -402,10 +638,8 @@ func SlackCommandHandler (c *gin.Context) {
 	token = command_body.Token
 
 	if token != "" && token == xpnk_constants.SlackCommandTkn { 
-	xpnk_slack.SlackGroupStatus(command_body)
-	c.JSON(200, "Well hello, Slack friend! You're cleared for takeoff. Here's your webhook: "+command_body.ResponseURL)
-	} else {
-		c.JSON(422, gin.H{"error":"I'm sorry, I seem to have lost my mind."})
+		response := xpnk_slack.SlackGroupStatus(command_body)
+		c.JSON(200, response)
 	}
 }
 
@@ -420,7 +654,7 @@ func CheckUserInvite (c *gin.Context) {
 	if user_invite_check.GroupName == user_invite.Group_name {
 		c.JSON(201, user_invite_check)
 	} else {
-		c.JSON(422, gin.H{"error": user_invite_check })
+		c.JSON(400, user_invite_check)
 	}
 }
 
@@ -575,16 +809,18 @@ func UsersUpdate (c *gin.Context) {
 
 func UsersByTwitterID (c *gin.Context) {
 	var twitterId				TwitterID
-	var user					XPNKUser 			
+	var user					XPNKUser 
+	var err_msg					error			
 	c.Bind(&twitterId)
 	twitter_id					:= twitterId.Twttr_userid
 	fmt.Printf("twitter_id:  %v \n", twitter_id)
 	if twitter_id == "" {
 		c.JSON(422, gin.H{"error": "Invalid or missing Twitter user ID."})
 	} else {
-		user 					= get_user_by_twitter(twitter_id)
+		user, err_msg 			= get_user_by_twitter(twitter_id)
 		if user.Twitter_ID != twitter_id {
 			c.JSON(202, user)
+			fmt.Printf("error:  %v \n", err_msg)
 		} else {
 			c.JSON(200, user)
 		}
@@ -594,15 +830,17 @@ func UsersByTwitterID (c *gin.Context) {
 func UsersByIGID (c *gin.Context) {
 	var igID					IGID
 	var user					XPNKUser
+	var err_msg					error
 	c.Bind(&igID)
 	ig_id						:= igID.IG_userid
 	fmt.Printf("ig_id: %v \n", ig_id)
 	if ig_id == "" {
 		c.JSON(422, gin.H{"error": "Invalid or missing Twitter user ID."})
 	} else {
-		user 					= get_user_by_ig(ig_id)
+		user, err_msg 			= get_user_by_ig(ig_id)
 		if user.Insta_userid != ig_id {
 			c.JSON(202, user)
+			fmt.Printf("error:  %v \n", err_msg)
 		} else {
 			c.JSON(200, user)
 		}
@@ -700,6 +938,22 @@ func updateSlackUser(new_Slackauth NewSlackAuth) int{
 	return user_xpnkid
 } 
 
+func getUserByTwitter(twitter_id string) int {
+	dbmap := db_connect.InitDb()
+	defer dbmap.Db.Close()
+	this_twitter_id := twitter_id
+	var xpnk_id int
+	err := dbmap.SelectOne(&xpnk_id, "SELECT user_ID FROM USERS WHERE twitter_ID=?", this_twitter_id)
+	var return_id int
+	if err == nil {
+		return_id = xpnk_id
+	} else {
+		fmt.Printf("\n==========\nProblemz with selecting xpnk_id: \n%+v\n",err)
+	}
+	
+	return return_id
+}
+
 func getXPNKUser(slackuserid string) int {
 	dbmap := db_connect.InitDb()
 	defer dbmap.Db.Close()
@@ -716,35 +970,59 @@ func getXPNKUser(slackuserid string) int {
 	return xpnkid
 }
 
-func get_user_by_twitter(twitter_id string) XPNKUser {
+func get_user_by_twitter(twitter_id string) (XPNKUser, error) {
 	dbmap := db_connect.InitDb()
 	defer dbmap.Db.Close()
 	
 	var xpnkUser			XPNKUser
+	var err_msg				error
 	twitterId				:= twitter_id
-	err	:= dbmap.SelectOne(&xpnkUser, "SELECT * FROM USERS WHERE twitter_ID=?", twitterId)
+	
+	err	:= dbmap.SelectOne(&xpnkUser, "SELECT `user_ID`, `twitter_user`, `twitter_ID`, `twitter_authtoken`, `twitter_secret`, `insta_user`, `insta_userid`, `insta_accesstoken`, `disqus_username`, `disqus_userid`, `disqus_accesstoken`, `profile_image` FROM USERS WHERE twitter_ID=?", twitterId)
 	if err != nil {
 		fmt.Printf("\n==========\nget_user_by_twitter - Problemz with selecting user by twitterID: \n%+v\n",err)
+		err_msg = err
+		fmt.Printf("\n==========\nget_user_by_twitter - Problemz with selecting user by twitterID: \n%+v\n",err_msg)
 	} else {
 		fmt.Printf("\n==========\nfound user: \n%+v\n",xpnkUser.User_ID)
 	}
-	return xpnkUser
+	return xpnkUser, err_msg
 }
 
-func get_user_by_ig(ig_id string) XPNKUser {
+func get_user_by_ig(ig_id string) (XPNKUser, error) {
 	dbmap := db_connect.InitDb()
 	defer dbmap.Db.Close()
 	
 	var xpnkUser			XPNKUser
+	var err_msg				error
 	IGId					:= ig_id
-	err	:= dbmap.SelectOne(&xpnkUser, "SELECT * FROM USERS WHERE insta_userid=?", IGId)
+	err	:= dbmap.SelectOne(&xpnkUser, "SELECT `user_ID`, `twitter_user`, `twitter_ID`, `twitter_authtoken`, `twitter_secret`, `insta_user`, `insta_userid`, `insta_accesstoken`, `disqus_username`, `disqus_userid`, `disqus_accesstoken`, `profile_image` FROM USERS WHERE insta_userid=?", IGId)
 	if err != nil {
 		fmt.Printf("\n==========\nget_user_by_ig - Problemz with selecting user by IGId: \n%+v\n",err)
+		err_msg = err
 	} else {
 		fmt.Printf("\n==========\nfound user: \n%+v\n",xpnkUser.User_ID)
 	}
-	return xpnkUser
+	return xpnkUser, err_msg
 }
+
+func get_user_groups(user_id string) ([]GroupOwner, error) {
+	dbmap := db_connect.InitDb()
+	defer dbmap.Db.Close()
+
+	var groupOwners			[]GroupOwner
+	var err_msg				error
+	
+	id						:= user_id
+	
+	_, err := dbmap.Select(&groupOwners, "SELECT `Group_ID`, `group_owner`, `group_admin` FROM USER_GROUPS WHERE user_ID=?", id)
+	
+	if err != nil {
+		err_msg				= err
+	} 
+	
+	return groupOwners, err_msg
+} 
 
 func check_twitter_id(twitter_id string) int {
 	dbmap := db_connect.InitDb()
@@ -925,7 +1203,7 @@ func getGroupID (groupName string) int{
 	dbmap 					:= db_connect.InitDb()
 	defer dbmap.Db.Close()
 	
-	err := dbmap.SelectOne(&groupID, "SELECT Group_ID FROM groups WHERE group_name=?", group_name)
+	err := dbmap.SelectOne(&groupID, "SELECT Group_ID FROM GROUPS WHERE group_name=?", group_name)
 	
 	if err == nil {
 		return groupID
