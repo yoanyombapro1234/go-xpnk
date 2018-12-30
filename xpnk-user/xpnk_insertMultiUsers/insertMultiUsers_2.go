@@ -2,6 +2,7 @@ package xpnk_insertMultiUsers
 
 /**************************************************************************************
 Takes a slice of User_Insert objects and inserts them into USERS table
+Returns the new user ID
 **************************************************************************************/
 
 import (
