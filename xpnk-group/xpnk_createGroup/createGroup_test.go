@@ -18,7 +18,7 @@ func TestCreateGroup(t *testing.T) {
 	
 	v, err := CreateGroup(request)
 
-	if v >= 0 {
+	if v <= 0 {
 		t.Errorf("Expected %c, got %v", v)
 		fmt.Printf("\nError:  %+v \n", err)
 	}				
