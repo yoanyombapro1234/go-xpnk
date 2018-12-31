@@ -12,6 +12,7 @@ import (
 	"fmt"
 	"xpnk-group/xpnk_createGroupInsert"
 	"xpnk-group/xpnk_insertGroup2"
+	"xpnk-group/xpnk_addUsersToGroup2"
 )
 
 type NewGroup struct {
@@ -23,7 +24,7 @@ type NewGroup struct {
 
 type NewGroupReturn struct {
 	Owner					string				`db:"group_owner" 	json:"group_owner"`
-	GroupID					string				`db:"Group_ID" 		json:"group_id"`
+	GroupID					int					`db:"Group_ID" 		json:"group_id"`
 	GroupSlug				string								
 }
 
@@ -39,5 +40,19 @@ func CreateGroup(newGroup NewGroup) (int, error) {
 	fmt.Printf("\n==========\nNEW GROUP: \n%+v\n", insertCreated)
 		
 	inserted, err 			:= xpnk_insertGroup2.InsertGroup2(insertCreated)
+	
+	var userGroup xpnk_addUsersToGroup2.Group_User
+	userGroup.User = newGroup.Owner
+	userGroup.Group = inserted
+	userGroup.Owner = true
+	fmt.Printf("\n==========\nGROUP MEMBER TO ADD: \n%+v\n", userGroup)
+		
+	ownerAdded, err2		:= xpnk_addUsersToGroup2.AddUsersToGroup(userGroup)
+	if err2 != nil {
+		fmt.Printf("\n==========\nUSER_GROUPS INSERT ERROR: \n%+v\n", err2)
+		return 0, err2
+	}
+	fmt.Printf("\n==========\nNEW GROUP MEMBER: \n%+v\n", ownerAdded)
+	
 	return inserted, err
 }
