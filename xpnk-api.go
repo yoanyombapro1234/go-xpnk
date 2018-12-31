@@ -19,6 +19,7 @@ import (
    		 "xpnk-user/xpnk_insertMultiUsers"
    		 "xpnk-shared/db_connect"
    		 "xpnk-group/xpnk_createGroupFromSlack"
+   		 "xpnk-group/xpnk_createGroup"
    		 "xpnk_slack"
  )
  
@@ -238,6 +239,7 @@ func main() {
  				c.Next()
 			})
 			v2.GET ("/groups/:id/members", GroupsByID)
+			v2.POST("/groups/", GroupsNew)
 			
 		}
 
@@ -551,6 +553,24 @@ func UsersUpdate_2(c *gin.Context) {
 	if update_thisUser == 1 {
 		fmt.Printf("\nthisUser updated:  %+v \n ID: %n\n", thisUser, id)
 		c.JSON(200, thisUser)
+	}
+}
+
+func GroupsNew (c *gin.Context) {
+	var newGroup				xpnk_createGroup.NewGroup
+	var err_msg					error
+	c.Bind(&newGroup)
+	fmt.Printf("newGroup to add:  %+v \n", newGroup)
+	if newGroup.GroupName == "" {
+		c.JSON(400, "A group name is required to create a new group.")
+		return
+	}
+	
+	newID, err_msg 			:=  xpnk_createGroup.CreateGroup(newGroup)
+	if err_msg != nil {
+		c.JSON(400, err_msg.Error())	
+	} else {
+		c.JSON(200, newID)
 	}
 }
 

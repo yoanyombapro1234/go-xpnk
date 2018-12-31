@@ -11,7 +11,7 @@ import (
 
 //the one User struct to rule them all
 type User_Object struct {
-	Id					int		`db:"user_ID"`				
+	Id					int			`db:"user_ID"`				
 	SlackName			string		`db:"slack_name"			json:"SlackName"`
 	SlackID				string		`db:"slack_userid"			json:"SlackID"`
 	SlackAvatar			string		`db:"slack_avatar"			json:"SlackAvatar"`
