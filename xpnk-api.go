@@ -20,6 +20,7 @@ import (
    		 "xpnk-shared/db_connect"
    		 "xpnk-group/xpnk_createGroupFromSlack"
    		 "xpnk-group/xpnk_createGroup"
+   		 "xpnk-group/xpnk_createInvite"
    		 "xpnk_slack"
  )
  
@@ -49,6 +50,11 @@ type NewSlackAuthInsert struct {
 	 Slack_username		string					`db:"slack_name"`
 	 Slack_avatar		string					`db:"profile_image"`
 	 Xpnk_id			int						`db:"user_ID"`
+}
+
+type InviteRequest struct {
+	Id				int					`form:"id" binding:"required"`
+	Source			string				`form:"source"`
 }
 
 type NewUserInvite 		struct {
@@ -240,6 +246,7 @@ func main() {
 			})
 			v2.GET ("/groups/:id/members", GroupsByID)
 			v2.POST("/groups/", GroupsNew)
+			v2.GET ("/groups/:id/invite/:source", GroupsInvite)
 			
 		}
 
@@ -572,6 +579,16 @@ func GroupsNew (c *gin.Context) {
 	} else {
 		c.JSON(200, newID)
 	}
+}
+
+func GroupsInvite (c *gin.Context) {
+	id, err 				:= strconv.Atoi(c.Params.ByName("id"))
+	if err != nil {
+		c.JSON( 400, err.Error())
+	}
+	source		 			:= c.Params.ByName("source")	
+	response				:= xpnk_createInvite.CreateInvite(id, source, "")
+	c.JSON(200, response)
 }
 
 /*****************************************
