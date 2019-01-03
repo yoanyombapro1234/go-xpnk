@@ -17,18 +17,18 @@ import (
 	"xpnk-shared/db_connect"
 )
 
-func CreateInvite(group_id int, source string, identifier string) (string) {
+func CreateInvite(group_id int, source string, identifier string) (string, error) {
 	
 	//retrieve the group_name for the new group
 	dbmap 					:= db_connect.InitDb()
 	defer dbmap.Db.Close()
 	
 	var xpnk_groupName 		string
-	err 					:= dbmap.SelectOne(&xpnk_groupName, "SELECT group_name FROM groups WHERE Group_ID=?", group_id)
+	err 					:= dbmap.SelectOne(&xpnk_groupName, "SELECT group_name FROM GROUPS WHERE Group_ID=?", group_id)
 	if err == nil {
-	    fmt.Printf("\n==========\nxpnk_groupName: %+v", xpnk_groupName)
+	    fmt.Printf("\n==========\nCreateInvite xpnk_groupName: %+v", xpnk_groupName)
 	} else {
-		fmt.Printf("\n==========\nProblemz with select: \n%+v\n",err)
+		fmt.Printf("\n==========\nCreateInvite Problemz with select: \n%+v\n",err)
 	}
 	
 	var token_request xpnk_groupTokens.GroupCount
@@ -44,6 +44,6 @@ func CreateInvite(group_id int, source string, identifier string) (string) {
 	invite_domain			:= "https://xapnik.com/"
 	invite_url				:= invite_domain+group_path+"/?xpnk_tkn="+token
 
-return invite_url
+return invite_url, err
 		
 }
