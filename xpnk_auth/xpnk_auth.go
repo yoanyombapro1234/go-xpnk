@@ -8,7 +8,7 @@ import (
 )
 
 const (
-    MySigningKey = ""
+    MySigningKey = "lakdjfiafjeoijaldknamnf823984udkafdjasdf"
 )
 
 func XPNKAuth() {

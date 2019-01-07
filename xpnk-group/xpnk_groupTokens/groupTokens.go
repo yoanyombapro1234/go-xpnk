@@ -27,6 +27,26 @@ type GroupTokenInsert struct {
 	XpnkGroup			int					`db:"group_id"`
 }
 
+func SaveInviteToken (group GroupCount) string {
+	dbmap := db_connect.InitDb()
+	defer dbmap.Db.Close()
+	dbmap.AddTableWithName(GroupTokenInsert{}, "group_tokens")
+
+	var group_token_insert 					GroupTokenInsert
+
+	source								:= group.Source
+	identifier							:= group.Identifier
+	group_token_insert.XpnkGroup		= group.XpnkGroup
+	group_token_insert.XpnkToken 		= xpnk_auth.GetNewGroupToken(source, identifier)
+	
+	err := dbmap.Insert(&group_token_insert)
+	if err != nil {
+		fmt.Printf("There was an error at line 44 of groupTokens.go", err)
+	}
+
+	return group_token_insert.XpnkToken	
+}
+
 func SaveGroupToken (group_count GroupCount) string {
 
 	dbmap := db_connect.InitDb()
