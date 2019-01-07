@@ -239,6 +239,12 @@ func main() {
 			
 			v2.PUT("/users/:id", UsersUpdate_2)
 			
+			v2.OPTIONS ("/groups", func(c *gin.Context) {
+				c.Writer.Header().Set("Access-Control-Allow-Methods", "POST, PUT")
+ 				c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, token, xpnkid")
+ 				c.Next()
+			})
+			
 			v2.OPTIONS ("/groups/:id/members", func(c *gin.Context) {
 				c.Writer.Header().Set("Access-Control-Allow-Methods", "PUT")
  				c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, token, xpnkid")
@@ -247,6 +253,7 @@ func main() {
 			v2.GET ("/groups/:id/members", GroupsByID)
 			v2.POST("/groups/", GroupsNew)
 			v2.GET ("/groups/:id/invite/:source", GroupsInvite)
+			v2.DELETE("/groups/:id", GroupsDelete)
 			
 		}
 
@@ -594,6 +601,30 @@ func GroupsInvite (c *gin.Context) {
 		return
 	}
 	c.JSON(200, response)
+}
+
+func GroupsDelete (c *gin.Context) {
+	groupid, err 			:= 	strconv.Atoi(c.Params.ByName("id"))
+	if err != nil {
+		c.JSON( 400, err.Error())
+		return
+	}
+	
+	if groupid <= 0 {
+	  	c.JSON(422, gin.H{"error": "No group_id was sent."})
+	  	return
+	} else {
+		groupdel, err 	:= delGroup(groupid)
+		if err != nil {
+			 fmt.Printf("\nERROR DELETING GROUP: %+v\n", err)
+			c.JSON(400, err.Error())
+			return
+		} else {
+			fmt.Printf("\nGROUP DELETED: %+v\n", groupdel)	
+			returnstring := "Group deleted: " + c.Params.ByName("id")
+			c.JSON(201, returnstring)
+		}	
+	}		 
 }
 
 /*****************************************
@@ -1253,6 +1284,31 @@ func getGroupID (groupName string) int{
 		fmt.Printf("\n==========\n getGroupID - Problemz with getting Group_ID for group api line 8872: \n%+v\n",err)
 		return groupID
 	}
+}
+
+func delGroup (groupID int) (int64, error) {
+	type Group struct {
+		Group_ID 			int 			`db:"Group_ID"`
+		Group_Name 			string 			`db:"group_name"`
+		Source				string			`db:"source"`
+		Source_ID			string			`db:"source_id"`		
+	}
+	
+	var group_id 			Group 
+	group_id.Group_ID = groupID 
+	fmt.Printf("\n==============\n Group_ID to be deleted: %+v", group_id.Group_ID)
+	
+	dbmap 					:= db_connect.InitDb()
+	defer dbmap.Db.Close()
+	
+	dbmap.AddTableWithName(Group{}, "GROUPS").SetKeys(true, "Group_ID")
+	
+	_, err := dbmap.Delete(&group_id)
+	fmt.Printf("\n==============\n deleted: %+v", group_id)
+	
+	count, err := dbmap.SelectInt("select count(*) from GROUPS where Group_ID=?", group_id.Group_ID)
+	fmt.Printf("\n==============\n COUNT: %+v", count)
+	return count, err
 }
 	
 //Maps are not inherently safe for concurrency - will have to use sync.RWMutex	
