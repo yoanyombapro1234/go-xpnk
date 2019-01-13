@@ -42,7 +42,7 @@ func GetInstaUserPosts(insta_User InstaUser) *instagram.PaginatedMediasResponse{
 	
 	params := url.Values{}
 	params.Set("count", "10")
-	params.Set("scope", "public_content")
+	params.Set("scope", "basic")
 	//params.Set("min_timestamp",unixtoday)
 	//params.Set("min_id", insta_User.Insta_maxID)
 	//these params are commented out in the hope that IG will fix their api some day
@@ -54,7 +54,7 @@ func GetInstaUserPosts(insta_User InstaUser) *instagram.PaginatedMediasResponse{
 	instaPosts, err := api.GetUserRecentMedia(insta_User.InstaID, params)
 	
 	if err != nil {
-		panic(err)
+		fmt.Println("Error getting Instagram posts for user %v: %s", insta_User.InstaID, err)
 	}	
 	
 	fmt.Printf("Medias Object:  %+v\n", instaPosts)
