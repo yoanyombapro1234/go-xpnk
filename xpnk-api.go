@@ -238,6 +238,7 @@ func main() {
 			v2.POST("/users", UsersNew_2)
 			
 			v2.PUT("/users/:id", UsersUpdate_2)
+			v2.DELETE("/users/:id", UsersDelete)
 			
 			v2.OPTIONS ("/groups", func(c *gin.Context) {
 				c.Writer.Header().Set("Access-Control-Allow-Methods", "POST, PUT")
@@ -568,6 +569,30 @@ func UsersUpdate_2(c *gin.Context) {
 		fmt.Printf("\nthisUser updated:  %+v \n ID: %n\n", thisUser, id)
 		c.JSON(200, thisUser)
 	}
+}
+
+func UsersDelete (c *gin.Context) {
+	userid, err 			:= 	strconv.Atoi(c.Params.ByName("id"))
+	if err != nil {
+		c.JSON( 400, err.Error())
+		return
+	}
+	
+	if userid <= 0 {
+	  	c.JSON(422, gin.H{"error": "No User_id was sent."})
+	  	return
+	} else {
+		userdel, err 	:= delUser(userid)
+		if err != nil {
+			 fmt.Printf("\nERROR DELETING USER: %+v\n", err)
+			c.JSON(400, err.Error())
+			return
+		} else {
+			fmt.Printf("\nUSER DELETED: %+v\n", userdel)	
+			returnstring := "User deleted: " + c.Params.ByName("id")
+			c.JSON(201, returnstring)
+		}	
+	}		 
 }
 
 func GroupsNew (c *gin.Context) {
@@ -1255,6 +1280,51 @@ func InsertNewGroupMember(new_GroupMember NewGroupMemberInsert) int {
 	return returnVal	
 }
 
+func delUser (userID int) (int64, error) {
+	type User struct {
+		User_ID 			int 			`db:"user_ID"`
+	}
+	
+	var user_id 			User 
+	user_id.User_ID = userID 
+	fmt.Printf("\n==============\n User_ID to be deleted: %+v", user_id.User_ID)
+	
+	dbmap 					:= db_connect.InitDb()
+	defer dbmap.Db.Close()
+	
+	dbmap.AddTableWithName(User{}, "USERS").SetKeys(true, "user_ID")
+	
+	_, err := dbmap.Delete(&user_id)
+	fmt.Printf("\n==============\n deleted: %+v", user_id)
+	
+	count, err := dbmap.SelectInt("select count(*) from USERS where user_ID=?", user_id.User_ID)
+	fmt.Printf("\n==============\n COUNT: %+v", count)
+	
+	res, err2 := delUserGroups(user_id.User_ID)
+	if err2 != nil {
+		fmt.Printf("\n===========\n delUserGroups error: %+v", err)
+	} else {
+		fmt.Printf("\n===========\n delUserGroups response: %+v", res)
+	}
+	
+	return count, err
+}
+
+func delUserGroups (userID int) (sql.Result, error) {
+	dbmap 					:= db_connect.InitDb()
+	defer dbmap.Db.Close()
+		
+	res, err := dbmap.Exec("delete from USER_GROUPS where User_ID=?", userID)
+	
+	if err != nil {
+		fmt.Printf("\n===========\n delUserGroups error: %+v", err)
+	} else {
+		fmt.Printf("\n===========\n delUserGroups response: %+v", res)
+	}
+	
+	return res, err
+}
+
 func getGroup (groupID string) []int{
 	var groupUsers			[]int
 	dbmap := db_connect.InitDb()
@@ -1308,7 +1378,30 @@ func delGroup (groupID int) (int64, error) {
 	
 	count, err := dbmap.SelectInt("select count(*) from GROUPS where Group_ID=?", group_id.Group_ID)
 	fmt.Printf("\n==============\n COUNT: %+v", count)
+	
+	res, err2 := delGroupUsers(group_id.Group_ID)
+	if err2 != nil {
+		fmt.Printf("\n===========\n delGroupUsers error: %+v", err)
+	} else {
+		fmt.Printf("\n===========\n delGroupUsers response: %+v", res)
+	}
+	
 	return count, err
+}
+
+func delGroupUsers (groupID int) (sql.Result, error) {
+	dbmap 					:= db_connect.InitDb()
+	defer dbmap.Db.Close()
+		
+	res, err := dbmap.Exec("delete from USER_GROUPS where Group_ID=?", groupID)
+	
+	if err != nil {
+		fmt.Printf("\n===========\n delGroupUsers error: %+v", err)
+	} else {
+		fmt.Printf("\n===========\n delGroupUsers response: %+v", res)
+	}
+	
+	return res, err
 }
 	
 //Maps are not inherently safe for concurrency - will have to use sync.RWMutex	
