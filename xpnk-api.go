@@ -10,6 +10,7 @@ import (
    		 "strings"
    		 "strconv"
    		 "reflect"
+   		 "errors"
    		 "xpnk_constants"
    		 "xpnk_auth"
    		 "xpnk-user/xpnk_checkUserInvite"
@@ -255,6 +256,7 @@ func main() {
 			v2.POST("/groups/", GroupsNew)
 			v2.GET ("/groups/:id/invite/:source", GroupsInvite)
 			v2.DELETE("/groups/:id", GroupsDelete)
+			v2.DELETE("groups/:id/user/:user/owner/:owner", GroupsMemberDelete)
 			
 		}
 
@@ -647,6 +649,37 @@ func GroupsDelete (c *gin.Context) {
 		} else {
 			fmt.Printf("\nGROUP DELETED: %+v\n", groupdel)	
 			returnstring := "Group deleted: " + c.Params.ByName("id")
+			c.JSON(201, returnstring)
+		}	
+	}		 
+}
+
+func GroupsMemberDelete (c *gin.Context) {
+	groupid 			:= 	c.Params.ByName("id")
+	userid				:= 	c.Params.ByName("user")
+	ownerid				:= 	c.Params.ByName("owner")
+	
+	groupnum, err		:= strconv.Atoi(groupid)
+	usernum, err2		:= strconv.Atoi(userid)
+	ownernum, err3		:= strconv.Atoi(ownerid)
+	
+	if err != nil || err2 != nil || err3 != nil {
+		c.JSON(422, gin.H{"error": "One of the ids you sent is missing or wrong."})
+	  	return
+	}
+	
+	if groupnum <= 0 || usernum <= 0 || ownernum <= 0 {
+	  	c.JSON(422, gin.H{"error": "One of the ids you sent is missing or wrong."})
+	  	return
+	} else {
+		memberdel, err 	:= delMember(groupid, userid, ownerid)
+		if err != nil {
+			 fmt.Printf("\nERROR DELETING MEMBER: %+v\n", err)
+			c.JSON(400, err.Error())
+			return
+		} else {
+			fmt.Printf("\nUSER REMOVED FROM GROUP: %+v\n", memberdel)	
+			returnstring := "User removed: " + c.Params.ByName("user")
 			c.JSON(201, returnstring)
 		}	
 	}		 
@@ -1356,6 +1389,26 @@ func getGroupID (groupName string) int{
 	}
 }
 
+func groupOwner (groupID string, ownerID string) (bool, error) {
+	dbmap 					:= db_connect.InitDb()
+	defer dbmap.Db.Close()
+	
+	query := "select group_owner from USER_GROUPS WHERE Group_ID=" + groupID + " AND user_ID=" + ownerID + " AND group_owner=1"
+
+	var owner_check int
+	err := dbmap.SelectOne(&owner_check, query)
+	if err != nil {
+		owner_error := errors.New("Only group owner can delete group member. Owner ID passed is not group owner. Did not find groups owner id as owner: " + err.Error())
+		return false, owner_error
+	}
+	if owner_check != 1 {
+		fmt.Printf("\n===========\n owner_check: %+v", strconv.Itoa(owner_check))
+		err1 := errors.New("Only group owner can delete group member. Owner ID passed is not group owner.")
+		return false, err1
+	}
+	return true, err
+}
+
 func delGroup (groupID int) (int64, error) {
 	type Group struct {
 		Group_ID 			int 			`db:"Group_ID"`
@@ -1387,6 +1440,22 @@ func delGroup (groupID int) (int64, error) {
 	}
 	
 	return count, err
+}
+
+func delMember (groupID string, userID string, ownerID string) (sql.Result, error) {	
+
+	ownercheck, err := groupOwner(groupID, ownerID)
+	if err != nil || ownercheck == false {
+		var result sql.Result 
+		return result , err 
+	}
+	
+	dbmap 					:= db_connect.InitDb()
+	defer dbmap.Db.Close()
+
+	delete_query := "delete from USER_GROUPS where Group_ID=" + groupID + " AND user_ID=" + userID 
+	res, err := dbmap.Exec(delete_query)
+	return res, err 
 }
 
 func delGroupUsers (groupID int) (sql.Result, error) {
