@@ -255,7 +255,7 @@ func main() {
 			v2.GET ("/groups/:id/members", GroupsByID)
 			v2.POST("/groups/", GroupsNew)
 			v2.GET ("/groups/:id/invite/:source", GroupsInvite)
-			v2.DELETE("/groups/:id", GroupsDelete)
+			v2.DELETE("/groups/:id/owner/:owner", GroupsDelete)
 			v2.DELETE("groups/:id/user/:user/owner/:owner", GroupsMemberDelete)
 			
 		}
@@ -631,17 +631,22 @@ func GroupsInvite (c *gin.Context) {
 }
 
 func GroupsDelete (c *gin.Context) {
-	groupid, err 			:= 	strconv.Atoi(c.Params.ByName("id"))
-	if err != nil {
-		c.JSON( 400, err.Error())
-		return
-	}
+	groupid		 			:= 	c.Params.ByName("id")
+	ownerid		 			:= 	c.Params.ByName("owner")
 	
-	if groupid <= 0 {
+	groupnum, err 			:=	strconv.Atoi(groupid)
+	_, err2					:=  strconv.Atoi(ownerid)
+	
+	if err != nil || err2 != nil {
+		c.JSON(422, gin.H{"error": "One of the ids you sent is missing or wrong."})
+	  	return
+	}
+		
+	if groupnum <= 0 {
 	  	c.JSON(422, gin.H{"error": "No group_id was sent."})
 	  	return
 	} else {
-		groupdel, err 	:= delGroup(groupid)
+		groupdel, err 	:= delGroup(groupid, ownerid)
 		if err != nil {
 			 fmt.Printf("\nERROR DELETING GROUP: %+v\n", err)
 			c.JSON(400, err.Error())
@@ -1398,7 +1403,7 @@ func groupOwner (groupID string, ownerID string) (bool, error) {
 	var owner_check int
 	err := dbmap.SelectOne(&owner_check, query)
 	if err != nil {
-		owner_error := errors.New("Only group owner can delete group member. Owner ID passed is not group owner. Did not find groups owner id as owner: " + err.Error())
+		owner_error := errors.New("Only group owner can delete group or member. Owner ID passed is not group owner. Did not find groups owner id as owner: " + err.Error())
 		return false, owner_error
 	}
 	if owner_check != 1 {
@@ -1409,7 +1414,7 @@ func groupOwner (groupID string, ownerID string) (bool, error) {
 	return true, err
 }
 
-func delGroup (groupID int) (int64, error) {
+func delGroup (groupID string, ownerID string) (int64, error) {
 	type Group struct {
 		Group_ID 			int 			`db:"Group_ID"`
 		Group_Name 			string 			`db:"group_name"`
@@ -1418,15 +1423,26 @@ func delGroup (groupID int) (int64, error) {
 	}
 	
 	var group_id 			Group 
-	group_id.Group_ID = groupID 
+	groupnum, err := strconv.Atoi(groupID)
+
+	if err != nil {
+		return 0, err
+	}
+	group_id.Group_ID = groupnum
 	fmt.Printf("\n==============\n Group_ID to be deleted: %+v", group_id.Group_ID)
+	
+	ownercheck, err := groupOwner(groupID, ownerID)
+	if err != nil || ownercheck == false {
+		var result int64 
+		return result , err 
+	}
 	
 	dbmap 					:= db_connect.InitDb()
 	defer dbmap.Db.Close()
 	
 	dbmap.AddTableWithName(Group{}, "GROUPS").SetKeys(true, "Group_ID")
 	
-	_, err := dbmap.Delete(&group_id)
+	_, err = dbmap.Delete(&group_id)
 	fmt.Printf("\n==============\n deleted: %+v", group_id)
 	
 	count, err := dbmap.SelectInt("select count(*) from GROUPS where Group_ID=?", group_id.Group_ID)
@@ -1434,9 +1450,9 @@ func delGroup (groupID int) (int64, error) {
 	
 	res, err2 := delGroupUsers(group_id.Group_ID)
 	if err2 != nil {
-		fmt.Printf("\n===========\n delGroupUsers error: %+v", err)
+		fmt.Printf("\n===========\n delGroup error: %+v", err)
 	} else {
-		fmt.Printf("\n===========\n delGroupUsers response: %+v", res)
+		fmt.Printf("\n===========\n delGroup response: %+v", res)
 	}
 	
 	return count, err
