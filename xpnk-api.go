@@ -99,12 +99,16 @@ type GroupsByUser		struct {
 	Group_ID			int
 	Owner				bool
 	Admin				bool
+	Name				string			
+	Slug				string
 }
 
 type GroupOwner 		struct {
 	Group_ID			int				`db:"Group_ID"			json:"Group_ID"`
 	Owner				sql.NullBool	`db:"group_owner"		json:"group_owner"`
-	Admin				sql.NullBool	`db:"group_admin"		json:"group_admin"`		
+	Admin				sql.NullBool	`db:"group_admin"		json:"group_admin"`
+	Name				string			`db:"group_name"		json:"group_name"`
+	Slug				string									`json:"group_slug"`		
 }
 
 type TwitterID struct {
@@ -486,12 +490,8 @@ func GetUserGroups (c *gin.Context) {
 	var	groups_trim				[]GroupsByUser
 	var user_groups				UserGroups
 	var err_msg					error
-	var err						error
 	user_id						:= c.Params.ByName("id")
-	if err != nil {
-			c.JSON(400, err.Error())
-			return
-	}
+	
 	if user_id == "" {
 		c.JSON(422, gin.H{"error": "Invalid or missing user ID."})
 		return
@@ -504,9 +504,14 @@ func GetUserGroups (c *gin.Context) {
 			for i := 0; i < len(groups); i++ {
 				var this_group GroupOwner
 				this_group = groups[i]
+				group_name				:= strings.ToLower(this_group.Name)
+				group_path	 			:= strings.Replace(group_name, " ", "-", -1)
+				
 				group_trim.Group_ID 	= this_group.Group_ID
 				group_trim.Owner 		= this_group.Owner.Bool
 				group_trim.Admin		= this_group.Admin.Bool
+				group_trim.Name			= this_group.Name
+				group_trim.Slug 		= group_path
 				groups_trim 			= append(groups_trim, group_trim)
 			}	
 			user_groups.Xpnk_id   = user_id
@@ -1151,7 +1156,11 @@ func get_user_groups(user_id string) ([]GroupOwner, error) {
 	
 	id						:= user_id
 	
-	_, err := dbmap.Select(&groupOwners, "SELECT `Group_ID`, `group_owner`, `group_admin` FROM USER_GROUPS WHERE user_ID=?", id)
+	_, err := dbmap.Select(&groupOwners, "SELECT `USER_GROUPS`.`Group_ID`, `USER_GROUPS`.`group_owner`, `USER_GROUPS`.`group_admin`, `groups`.`group_name` FROM USER_GROUPS INNER JOIN groups ON `USER_GROUPS`.`Group_ID` = `groups`.`Group_ID` WHERE `USER_GROUPS`.`user_ID` =?", id)
+		
+	/*
+	SELECT `USER_GROUPS`.`Group_ID`, `USER_GROUPS`.`group_owner`, `USER_GROUPS`.`group_admin`, `groups`.`group_name` FROM USER_GROUPS INNER JOIN groups ON `USER_GROUPS`.`Group_ID` = `groups`.`Group_ID` WHERE `USER_GROUPS`.`user_ID` = 1;
+	*/
 	
 	if err != nil {
 		err_msg				= err
