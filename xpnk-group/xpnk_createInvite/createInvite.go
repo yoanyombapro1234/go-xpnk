@@ -42,7 +42,7 @@ func CreateInvite(group_id int, source string, identifier string) (string, error
 	group_name				:= strings.ToLower(xpnk_groupName)
 	group_path	 			:= strings.Replace(group_name, " ", "-", -1)
 	invite_domain			:= "https://xapnik.com/"
-	invite_url				:= invite_domain+group_path+"/?xpnk_tkn="+token
+	invite_url				:= invite_domain+group_path+"?xpnk_tkn="+token
 
 return invite_url, err
 		

@@ -10,6 +10,7 @@ import (
    		 "strings"
    		 "strconv"
    		 "reflect"
+   		 "errors"
    		 "xpnk_constants"
    		 "xpnk_auth"
    		 "xpnk-user/xpnk_checkUserInvite"
@@ -98,12 +99,16 @@ type GroupsByUser		struct {
 	Group_ID			int
 	Owner				bool
 	Admin				bool
+	Name				string			
+	Slug				string
 }
 
 type GroupOwner 		struct {
 	Group_ID			int				`db:"Group_ID"			json:"Group_ID"`
 	Owner				sql.NullBool	`db:"group_owner"		json:"group_owner"`
-	Admin				sql.NullBool	`db:"group_admin"		json:"group_admin"`		
+	Admin				sql.NullBool	`db:"group_admin"		json:"group_admin"`
+	Name				string			`db:"group_name"		json:"group_name"`
+	Slug				string									`json:"group_slug"`		
 }
 
 type TwitterID struct {
@@ -238,6 +243,7 @@ func main() {
 			v2.POST("/users", UsersNew_2)
 			
 			v2.PUT("/users/:id", UsersUpdate_2)
+			v2.DELETE("/users/:id", UsersDelete)
 			
 			v2.OPTIONS ("/groups", func(c *gin.Context) {
 				c.Writer.Header().Set("Access-Control-Allow-Methods", "POST, PUT")
@@ -253,7 +259,8 @@ func main() {
 			v2.GET ("/groups/:id/members", GroupsByID)
 			v2.POST("/groups/", GroupsNew)
 			v2.GET ("/groups/:id/invite/:source", GroupsInvite)
-			v2.DELETE("/groups/:id", GroupsDelete)
+			v2.DELETE("/groups/:id/owner/:owner", GroupsDelete)
+			v2.DELETE("groups/:id/user/:user/owner/:owner", GroupsMemberDelete)
 			
 		}
 
@@ -483,12 +490,8 @@ func GetUserGroups (c *gin.Context) {
 	var	groups_trim				[]GroupsByUser
 	var user_groups				UserGroups
 	var err_msg					error
-	var err						error
 	user_id						:= c.Params.ByName("id")
-	if err != nil {
-			c.JSON(400, err.Error())
-			return
-	}
+	
 	if user_id == "" {
 		c.JSON(422, gin.H{"error": "Invalid or missing user ID."})
 		return
@@ -501,9 +504,14 @@ func GetUserGroups (c *gin.Context) {
 			for i := 0; i < len(groups); i++ {
 				var this_group GroupOwner
 				this_group = groups[i]
+				group_name				:= strings.ToLower(this_group.Name)
+				group_path	 			:= strings.Replace(group_name, " ", "-", -1)
+				
 				group_trim.Group_ID 	= this_group.Group_ID
 				group_trim.Owner 		= this_group.Owner.Bool
 				group_trim.Admin		= this_group.Admin.Bool
+				group_trim.Name			= this_group.Name
+				group_trim.Slug 		= group_path
 				groups_trim 			= append(groups_trim, group_trim)
 			}	
 			user_groups.Xpnk_id   = user_id
@@ -570,6 +578,30 @@ func UsersUpdate_2(c *gin.Context) {
 	}
 }
 
+func UsersDelete (c *gin.Context) {
+	userid, err 			:= 	strconv.Atoi(c.Params.ByName("id"))
+	if err != nil {
+		c.JSON( 400, err.Error())
+		return
+	}
+	
+	if userid <= 0 {
+	  	c.JSON(422, gin.H{"error": "No User_id was sent."})
+	  	return
+	} else {
+		userdel, err 	:= delUser(userid)
+		if err != nil {
+			 fmt.Printf("\nERROR DELETING USER: %+v\n", err)
+			c.JSON(400, err.Error())
+			return
+		} else {
+			fmt.Printf("\nUSER DELETED: %+v\n", userdel)	
+			returnstring := "User deleted: " + c.Params.ByName("id")
+			c.JSON(201, returnstring)
+		}	
+	}		 
+}
+
 func GroupsNew (c *gin.Context) {
 	var newGroup				xpnk_createGroup.NewGroup
 	var err_msg					error
@@ -604,17 +636,22 @@ func GroupsInvite (c *gin.Context) {
 }
 
 func GroupsDelete (c *gin.Context) {
-	groupid, err 			:= 	strconv.Atoi(c.Params.ByName("id"))
-	if err != nil {
-		c.JSON( 400, err.Error())
-		return
-	}
+	groupid		 			:= 	c.Params.ByName("id")
+	ownerid		 			:= 	c.Params.ByName("owner")
 	
-	if groupid <= 0 {
+	groupnum, err 			:=	strconv.Atoi(groupid)
+	_, err2					:=  strconv.Atoi(ownerid)
+	
+	if err != nil || err2 != nil {
+		c.JSON(422, gin.H{"error": "One of the ids you sent is missing or wrong."})
+	  	return
+	}
+		
+	if groupnum <= 0 {
 	  	c.JSON(422, gin.H{"error": "No group_id was sent."})
 	  	return
 	} else {
-		groupdel, err 	:= delGroup(groupid)
+		groupdel, err 	:= delGroup(groupid, ownerid)
 		if err != nil {
 			 fmt.Printf("\nERROR DELETING GROUP: %+v\n", err)
 			c.JSON(400, err.Error())
@@ -622,6 +659,37 @@ func GroupsDelete (c *gin.Context) {
 		} else {
 			fmt.Printf("\nGROUP DELETED: %+v\n", groupdel)	
 			returnstring := "Group deleted: " + c.Params.ByName("id")
+			c.JSON(201, returnstring)
+		}	
+	}		 
+}
+
+func GroupsMemberDelete (c *gin.Context) {
+	groupid 			:= 	c.Params.ByName("id")
+	userid				:= 	c.Params.ByName("user")
+	ownerid				:= 	c.Params.ByName("owner")
+	
+	groupnum, err		:= strconv.Atoi(groupid)
+	usernum, err2		:= strconv.Atoi(userid)
+	ownernum, err3		:= strconv.Atoi(ownerid)
+	
+	if err != nil || err2 != nil || err3 != nil {
+		c.JSON(422, gin.H{"error": "One of the ids you sent is missing or wrong."})
+	  	return
+	}
+	
+	if groupnum <= 0 || usernum <= 0 || ownernum <= 0 {
+	  	c.JSON(422, gin.H{"error": "One of the ids you sent is missing or wrong."})
+	  	return
+	} else {
+		memberdel, err 	:= delMember(groupid, userid, ownerid)
+		if err != nil {
+			 fmt.Printf("\nERROR DELETING MEMBER: %+v\n", err)
+			c.JSON(400, err.Error())
+			return
+		} else {
+			fmt.Printf("\nUSER REMOVED FROM GROUP: %+v\n", memberdel)	
+			returnstring := "User removed: " + c.Params.ByName("user")
 			c.JSON(201, returnstring)
 		}	
 	}		 
@@ -1088,7 +1156,11 @@ func get_user_groups(user_id string) ([]GroupOwner, error) {
 	
 	id						:= user_id
 	
-	_, err := dbmap.Select(&groupOwners, "SELECT `Group_ID`, `group_owner`, `group_admin` FROM USER_GROUPS WHERE user_ID=?", id)
+	_, err := dbmap.Select(&groupOwners, "SELECT `USER_GROUPS`.`Group_ID`, `USER_GROUPS`.`group_owner`, `USER_GROUPS`.`group_admin`, `groups`.`group_name` FROM USER_GROUPS INNER JOIN groups ON `USER_GROUPS`.`Group_ID` = `groups`.`Group_ID` WHERE `USER_GROUPS`.`user_ID` =?", id)
+		
+	/*
+	SELECT `USER_GROUPS`.`Group_ID`, `USER_GROUPS`.`group_owner`, `USER_GROUPS`.`group_admin`, `groups`.`group_name` FROM USER_GROUPS INNER JOIN groups ON `USER_GROUPS`.`Group_ID` = `groups`.`Group_ID` WHERE `USER_GROUPS`.`user_ID` = 1;
+	*/
 	
 	if err != nil {
 		err_msg				= err
@@ -1255,6 +1327,51 @@ func InsertNewGroupMember(new_GroupMember NewGroupMemberInsert) int {
 	return returnVal	
 }
 
+func delUser (userID int) (int64, error) {
+	type User struct {
+		User_ID 			int 			`db:"user_ID"`
+	}
+	
+	var user_id 			User 
+	user_id.User_ID = userID 
+	fmt.Printf("\n==============\n User_ID to be deleted: %+v", user_id.User_ID)
+	
+	dbmap 					:= db_connect.InitDb()
+	defer dbmap.Db.Close()
+	
+	dbmap.AddTableWithName(User{}, "USERS").SetKeys(true, "user_ID")
+	
+	_, err := dbmap.Delete(&user_id)
+	fmt.Printf("\n==============\n deleted: %+v", user_id)
+	
+	count, err := dbmap.SelectInt("select count(*) from USERS where user_ID=?", user_id.User_ID)
+	fmt.Printf("\n==============\n COUNT: %+v", count)
+	
+	res, err2 := delUserGroups(user_id.User_ID)
+	if err2 != nil {
+		fmt.Printf("\n===========\n delUserGroups error: %+v", err)
+	} else {
+		fmt.Printf("\n===========\n delUserGroups response: %+v", res)
+	}
+	
+	return count, err
+}
+
+func delUserGroups (userID int) (sql.Result, error) {
+	dbmap 					:= db_connect.InitDb()
+	defer dbmap.Db.Close()
+		
+	res, err := dbmap.Exec("delete from USER_GROUPS where User_ID=?", userID)
+	
+	if err != nil {
+		fmt.Printf("\n===========\n delUserGroups error: %+v", err)
+	} else {
+		fmt.Printf("\n===========\n delUserGroups response: %+v", res)
+	}
+	
+	return res, err
+}
+
 func getGroup (groupID string) []int{
 	var groupUsers			[]int
 	dbmap := db_connect.InitDb()
@@ -1286,7 +1403,27 @@ func getGroupID (groupName string) int{
 	}
 }
 
-func delGroup (groupID int) (int64, error) {
+func groupOwner (groupID string, ownerID string) (bool, error) {
+	dbmap 					:= db_connect.InitDb()
+	defer dbmap.Db.Close()
+	
+	query := "select group_owner from USER_GROUPS WHERE Group_ID=" + groupID + " AND user_ID=" + ownerID + " AND group_owner=1"
+
+	var owner_check int
+	err := dbmap.SelectOne(&owner_check, query)
+	if err != nil {
+		owner_error := errors.New("Only group owner can delete group or member. Owner ID passed is not group owner. Did not find groups owner id as owner: " + err.Error())
+		return false, owner_error
+	}
+	if owner_check != 1 {
+		fmt.Printf("\n===========\n owner_check: %+v", strconv.Itoa(owner_check))
+		err1 := errors.New("Only group owner can delete group member. Owner ID passed is not group owner.")
+		return false, err1
+	}
+	return true, err
+}
+
+func delGroup (groupID string, ownerID string) (int64, error) {
 	type Group struct {
 		Group_ID 			int 			`db:"Group_ID"`
 		Group_Name 			string 			`db:"group_name"`
@@ -1295,20 +1432,70 @@ func delGroup (groupID int) (int64, error) {
 	}
 	
 	var group_id 			Group 
-	group_id.Group_ID = groupID 
+	groupnum, err := strconv.Atoi(groupID)
+
+	if err != nil {
+		return 0, err
+	}
+	group_id.Group_ID = groupnum
 	fmt.Printf("\n==============\n Group_ID to be deleted: %+v", group_id.Group_ID)
+	
+	ownercheck, err := groupOwner(groupID, ownerID)
+	if err != nil || ownercheck == false {
+		var result int64 
+		return result , err 
+	}
 	
 	dbmap 					:= db_connect.InitDb()
 	defer dbmap.Db.Close()
 	
 	dbmap.AddTableWithName(Group{}, "GROUPS").SetKeys(true, "Group_ID")
 	
-	_, err := dbmap.Delete(&group_id)
+	_, err = dbmap.Delete(&group_id)
 	fmt.Printf("\n==============\n deleted: %+v", group_id)
 	
 	count, err := dbmap.SelectInt("select count(*) from GROUPS where Group_ID=?", group_id.Group_ID)
 	fmt.Printf("\n==============\n COUNT: %+v", count)
+	
+	res, err2 := delGroupUsers(group_id.Group_ID)
+	if err2 != nil {
+		fmt.Printf("\n===========\n delGroup error: %+v", err)
+	} else {
+		fmt.Printf("\n===========\n delGroup response: %+v", res)
+	}
+	
 	return count, err
+}
+
+func delMember (groupID string, userID string, ownerID string) (sql.Result, error) {	
+
+	ownercheck, err := groupOwner(groupID, ownerID)
+	if err != nil || ownercheck == false {
+		var result sql.Result 
+		return result , err 
+	}
+	
+	dbmap 					:= db_connect.InitDb()
+	defer dbmap.Db.Close()
+
+	delete_query := "delete from USER_GROUPS where Group_ID=" + groupID + " AND user_ID=" + userID 
+	res, err := dbmap.Exec(delete_query)
+	return res, err 
+}
+
+func delGroupUsers (groupID int) (sql.Result, error) {
+	dbmap 					:= db_connect.InitDb()
+	defer dbmap.Db.Close()
+		
+	res, err := dbmap.Exec("delete from USER_GROUPS where Group_ID=?", groupID)
+	
+	if err != nil {
+		fmt.Printf("\n===========\n delGroupUsers error: %+v", err)
+	} else {
+		fmt.Printf("\n===========\n delGroupUsers response: %+v", res)
+	}
+	
+	return res, err
 }
 	
 //Maps are not inherently safe for concurrency - will have to use sync.RWMutex	
