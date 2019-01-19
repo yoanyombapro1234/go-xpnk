@@ -171,7 +171,8 @@ func main() {
 
 	r := gin.Default()
 	r.Use(Cors())
-	r.Static("api/v1/data", "./xpnk-data/")
+	r.Static("api/v1/data", "../xpnk-data/")
+	r.Static("api/v2/data", "../xpnk-data/")
 	
 /*****************************************
 *
