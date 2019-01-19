@@ -498,7 +498,6 @@ func GetUserGroups (c *gin.Context) {
 	} else {
 		groups, err_msg 		  = get_user_groups(user_id)
 		if err_msg != nil {
-			c.JSON(400, gin.H{"error": "get_user_groups threw an error"})
 			c.JSON(400, err_msg.Error())
 		} else {	
 			for i := 0; i < len(groups); i++ {
@@ -1156,7 +1155,7 @@ func get_user_groups(user_id string) ([]GroupOwner, error) {
 	
 	id						:= user_id
 	
-	_, err := dbmap.Select(&groupOwners, "SELECT `USER_GROUPS`.`Group_ID`, `USER_GROUPS`.`group_owner`, `USER_GROUPS`.`group_admin`, `groups`.`group_name` FROM USER_GROUPS INNER JOIN groups ON `USER_GROUPS`.`Group_ID` = `groups`.`Group_ID` WHERE `USER_GROUPS`.`user_ID` =?", id)
+	_, err := dbmap.Select(&groupOwners, "SELECT `USER_GROUPS`.`Group_ID`, `USER_GROUPS`.`group_owner`, `USER_GROUPS`.`group_admin`, `GROUPS`.`group_name` FROM USER_GROUPS INNER JOIN GROUPS ON `USER_GROUPS`.`Group_ID` = `GROUPS`.`Group_ID` WHERE `USER_GROUPS`.`user_ID` =?", id)
 		
 	/*
 	SELECT `USER_GROUPS`.`Group_ID`, `USER_GROUPS`.`group_owner`, `USER_GROUPS`.`group_admin`, `groups`.`group_name` FROM USER_GROUPS INNER JOIN groups ON `USER_GROUPS`.`Group_ID` = `groups`.`Group_ID` WHERE `USER_GROUPS`.`user_ID` = 1;
