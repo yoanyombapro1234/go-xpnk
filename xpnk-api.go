@@ -18,6 +18,7 @@ import (
    		 "xpnk-user/xpnk_createUserObject"
    		 "xpnk-user/xpnk_updateUser"
    		 "xpnk-user/xpnk_insertMultiUsers"
+   		 "xpnk-user/xpnk_checkTwitterId"
    		 "xpnk-shared/db_connect"
    		 "xpnk-group/xpnk_createGroupFromSlack"
    		 "xpnk-group/xpnk_createGroup"
@@ -229,6 +230,8 @@ func main() {
 			
 			v2.GET ("/users/groups/:id", GetUserGroups)
 			
+			v2.GET ("/users/login/twitter", LoginTwitter)
+			
 			v2.OPTIONS ("/users/authCheck", func(c *gin.Context) {
 				c.Writer.Header().Set("Access-Control-Allow-Methods", "POST, PUT")
  				c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, token, xpnkid")
@@ -260,7 +263,19 @@ func main() {
 			v2.GET ("/groups/:id/members", GroupsByID)
 			v2.POST("/groups/", GroupsNew)
 			v2.GET ("/groups/:id/invite/:source", GroupsInvite)
+			
+			v2.OPTIONS ("/groups/:id/owner/:owner", func(c *gin.Context) {
+				c.Writer.Header().Set("Access-Control-Allow-Methods", "PUT, DELETE")
+ 				c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, token, xpnkid")
+ 				c.Next()
+			})
 			v2.DELETE("/groups/:id/owner/:owner", GroupsDelete)
+			
+			v2.OPTIONS ("groups/:id/user/:user/owner/:owner", func(c *gin.Context) {
+				c.Writer.Header().Set("Access-Control-Allow-Methods", "PUT, DELETE")
+ 				c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, token, xpnkid")
+ 				c.Next()
+			})
 			v2.DELETE("groups/:id/user/:user/owner/:owner", GroupsMemberDelete)
 			
 		}
@@ -520,6 +535,29 @@ func GetUserGroups (c *gin.Context) {
 		}
 	}
 } 
+
+func LoginTwitter (c *gin.Context) {
+	type TwitterCreds struct {
+		Token				string			`form:"token" binding:"required"`
+		Secret				string			`form:"secret" binding:"required"`
+	}
+	var twitter_creds TwitterCreds
+	var err error
+	c.Bind(&twitter_creds)
+	token := twitter_creds.Token
+	secret := twitter_creds.Secret
+	if twitter_creds.Token == "" || twitter_creds.Secret == "" {
+		c.JSON(400, "A user token and secret are required. One or both are missing.")
+		return
+	}
+	
+	user_groups, err := xpnk_checkTwitterId.CheckTwitterId(token, secret)
+	if err !=  nil {
+		c.JSON(400, err.Error())	
+	} else {
+		c.JSON(200, user_groups)
+	}
+}
 
 func UsersNew_2 (c *gin.Context) {
 	var newUser					xpnk_createUserObject.User_Object
