@@ -32,7 +32,6 @@ func CreateGroupInsert(newGroup New_Group) Group_Insert {
 		this_group_insert.GroupName			= newGroup.GroupName
 		this_group_insert.SourceID			= newGroup.SourceID
 		this_group_insert.Source	 		= newGroup.Source
-		this_group_insert.GroupID			= 0
 						
 		fmt.Printf("\n==========\nTHIS_GROUP_INSERT: \n%+v\n",this_group_insert)
 		

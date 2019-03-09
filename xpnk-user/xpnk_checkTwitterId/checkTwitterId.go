@@ -13,17 +13,23 @@ import (
 	"fmt"
 	"strconv"
 	"xpnk-user/xpnk_user_structs"
-	"xpnk_twitter"
+	"xpnk_twitter/twitter_verify"
+	"xpnk_twitter/get_user_by_twitter"
 	"xpnk-user/xpnk_get_groups"
 )
 
 func CheckTwitterId (usertoken string, usersecret string) (xpnk_user_structs.UserGroups, error) {
 
-	twitter_id := xpnk_twitter.AccountVerify(usertoken, usersecret)	
-	
+	twitter_id, err := twitter_verify.AccountVerify(usertoken, usersecret)	
+		
 	fmt.Printf("\nTwitter userid: %+v\n", twitter_id)
+	
+	if twitter_id == "" {
+		var user_groups xpnk_user_structs.UserGroups
+		return user_groups, err
+	} 
 
-	xpnk_id, err := xpnk_twitter.GetUserByTwitter(twitter_id)
+	xpnk_id, err := get_user_by_twitter.GetUserByTwitter(twitter_id)
 	if err != nil {
 		fmt.Printf("checkerTwitterId threw an error: %e", err)
 	} 

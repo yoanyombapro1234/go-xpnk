@@ -1,4 +1,4 @@
-package xpnk_twitter
+package twitter_verify
 
 import (
 	"fmt"
@@ -7,7 +7,7 @@ import (
    	"xpnk_constants"
 )
 
-func AccountVerify (token string, secret string) string {
+func AccountVerify (token string, secret string) (string, error) {
 
 	anaconda.SetConsumerKey(xpnk_constants.TwitterKey)
 	anaconda.SetConsumerSecret(xpnk_constants.TwitterSec)
@@ -25,5 +25,5 @@ func AccountVerify (token string, secret string) string {
 	fmt.Printf("\nTwitter user: %+s\n", screenname)
 	fmt.Printf("\nTwitter userid: %+v\n", userid)
 	
-	return userid
+	return userid, err 
 }

@@ -1,4 +1,4 @@
-package xpnk_twitter
+package get_user_by_twitter
 
 import (
 	"testing"
