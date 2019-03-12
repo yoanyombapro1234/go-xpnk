@@ -1,4 +1,4 @@
-package xpnk_twitter
+package get_user_by_twitter
 
 import (
 	"testing"
@@ -7,7 +7,8 @@ import (
 
 func TestGetUserByTwitter (t *testing.T) {
 
-	twitter_id := "131547767"
+	twitter_id := "0000000"
+	//twitter_id := "131547767"
 
 	v, err := GetUserByTwitter(twitter_id)
 	

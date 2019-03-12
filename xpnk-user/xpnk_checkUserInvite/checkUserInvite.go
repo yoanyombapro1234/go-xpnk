@@ -69,7 +69,7 @@ func fetch_groupId (user_token string) int {
 		return_int = user_groupId
 	} else {
 		return_int = 0
-		fmt.Printf("\n==========\nProblemz with select in checkUserInvite line 45: \n%+v\n",err)
+		fmt.Printf("\n==========\nProblemz with select in checkUserInvite line 72: \n%+v\n",err)
 	}
 	return return_int
 }
@@ -87,8 +87,8 @@ func fetch_groupName (group_id int) string {
 		fmt.Printf("\n==========\nuser_groupName: %v \n", user_groupName)
 		return_string = strings.ToLower(strings.Replace(user_groupName, " ", "-", -1))
 	} else {
-		fmt.Printf("\n==========\nProblemz with select in checkUserInvite line 54: \n%+v\n",err)
-		return_string = "There was a problem retrieving the group_name from the db in checkUserInvite line 72"
+		fmt.Printf("\n==========\nProblemz with select in checkUserInvite line 90: \n%+v\n",err)
+		return_string = "There was a problem retrieving the group_name from the db in checkUserInvite line 90"
 	}
 	return return_string
 }
