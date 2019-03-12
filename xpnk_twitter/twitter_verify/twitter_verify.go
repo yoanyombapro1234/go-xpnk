@@ -9,10 +9,9 @@ import (
 
 func AccountVerify (token string, secret string) (string, string, error) {
 
-	//anaconda.SetConsumerKey(xpnk_constants.TwitterKey)
-	//anaconda.SetConsumerSecret(xpnk_constants.TwitterSec)
-	//api := anaconda.NewTwitterApi(token, secret)
-	api := NewTwitterApiWithCredentials(token, secret, xpnk_constants.TwitterKey, xpnk_constants.TwitterSec)
+	anaconda.SetConsumerKey(xpnk_constants.TwitterKey)
+	anaconda.SetConsumerSecret(xpnk_constants.TwitterSec)
+	api := anaconda.NewTwitterApi(token, secret)
 	
 	user, err := api.GetSelf(url.Values{})
 	
