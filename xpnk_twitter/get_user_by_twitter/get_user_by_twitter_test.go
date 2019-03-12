@@ -7,7 +7,8 @@ import (
 
 func TestGetUserByTwitter (t *testing.T) {
 
-	twitter_id := "131547767"
+	twitter_id := "0000000"
+	//twitter_id := "131547767"
 
 	v, err := GetUserByTwitter(twitter_id)
 	

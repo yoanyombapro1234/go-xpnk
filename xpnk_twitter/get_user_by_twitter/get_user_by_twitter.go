@@ -18,8 +18,15 @@ func GetUserByTwitter(twitter_id string) (int, error) {
 		fmt.Printf("\n==========\nget_user_by_twitter - Problemz with selecting user by twitterID: \n%+v\n",err)
 		err_msg = err
 		fmt.Printf("\n==========\nget_user_by_twitter - Problemz with selecting user by twitterID: \n%+v\n",err_msg)
+		if err_msg.Error() == "sql: no rows in result set" {
+			xpnkUser = 0
+			fmt.Printf("\n==========\nNo user found: %+v\n",xpnkUser)
+		}
+		
 	} else {
 		fmt.Printf("\n==========\nfound user: \n%+v\n",xpnkUser)
-	}
+	} 
+	
+	fmt.Printf("\n==========\nUser ID: %+v\n",xpnkUser)
 	return xpnkUser, err_msg
 }

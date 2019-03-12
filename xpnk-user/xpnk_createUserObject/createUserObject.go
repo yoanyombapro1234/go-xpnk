@@ -11,13 +11,14 @@ import (
 
 //the one User struct to rule them all
 type User_Object struct {
-	Id					int			`db:"user_ID"`				
+	Id					int		`db:"user_ID"`				
 	SlackName			string		`db:"slack_name"			json:"SlackName"`
 	SlackID				string		`db:"slack_userid"			json:"SlackID"`
 	SlackAvatar			string		`db:"slack_avatar"			json:"SlackAvatar"`
 	TwitterUser			string		`db:"twitter_user"			json:"TwitterUser"`
 	TwitterID			string		`db:"twitter_ID"			json:"TwitterID"`
 	TwitterToken		string		`db:"twitter_authtoken"		json:"TwitterToken"`
+	TwitterSecret		string		`db:"twitter_secret"		json:"TwitterSecret"`
 	LastTweet			string		`db:"last_tweet"			json:"LastTweet"`
 	InstaUser			string		`db:"insta_user"			json:"InstaUser"`
 	InstaUserID			string		`db:"insta_userid"			json:"InstaUserID"`
@@ -42,6 +43,7 @@ func CreateUserObject(newUser User_Object) User_Object {
 		this_user_object.TwitterUser	 	= newUser.TwitterUser
 		this_user_object.TwitterID		 	= newUser.TwitterID
 		this_user_object.TwitterToken		= newUser.TwitterToken
+		this_user_object.TwitterSecret		= newUser.TwitterSecret
 		this_user_object.LastTweet		 	= newUser.LastTweet
 		this_user_object.InstaUser		 	= newUser.InstaUser
 		this_user_object.InstaUserID	 	= newUser.InstaUserID

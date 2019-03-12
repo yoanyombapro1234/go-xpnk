@@ -7,11 +7,12 @@ import (
    	"xpnk_constants"
 )
 
-func AccountVerify (token string, secret string) (string, error) {
+func AccountVerify (token string, secret string) (string, string, error) {
 
-	anaconda.SetConsumerKey(xpnk_constants.TwitterKey)
-	anaconda.SetConsumerSecret(xpnk_constants.TwitterSec)
-	api := anaconda.NewTwitterApi(token, secret)
+	//anaconda.SetConsumerKey(xpnk_constants.TwitterKey)
+	//anaconda.SetConsumerSecret(xpnk_constants.TwitterSec)
+	//api := anaconda.NewTwitterApi(token, secret)
+	api := NewTwitterApiWithCredentials(token, secret, xpnk_constants.TwitterKey, xpnk_constants.TwitterSec)
 	
 	user, err := api.GetSelf(url.Values{})
 	
@@ -19,11 +20,11 @@ func AccountVerify (token string, secret string) (string, error) {
 		fmt.Printf("GetSelf in xpnk_twitter account_verify returned an error: %s", err.Error())
 	}
 	
-	screenname := user.ScreenName
+	screen_name := user.ScreenName
 	userid := user.IdStr
 	
-	fmt.Printf("\nTwitter user: %+s\n", screenname)
+	fmt.Printf("\nTwitter user: %+s\n", screen_name)
 	fmt.Printf("\nTwitter userid: %+v\n", userid)
 	
-	return userid, err 
+	return userid, screen_name, err 
 }
