@@ -537,21 +537,18 @@ func GetUserGroups (c *gin.Context) {
 } 
 
 func LoginTwitter (c *gin.Context) {
-	type TwitterCreds struct {
-		Token				string			`form:"token" binding:"required"`
-		Secret				string			`form:"secret" binding:"required"`
-	}
-	var twitter_creds TwitterCreds
+	var twitter_creds xpnk_createUserObject.User_Object
 	var err error
 	c.Bind(&twitter_creds)
-	token := twitter_creds.Token
-	secret := twitter_creds.Secret
-	if twitter_creds.Token == "" || twitter_creds.Secret == "" {
-		c.JSON(400, "A user token and secret are required. One or both are missing.")
+	token := twitter_creds.TwitterToken
+	secret := twitter_creds.TwitterSecret
+	id := twitter_creds.TwitterID
+	if token == "" || secret == "" || id == "" {
+		c.JSON(400, "A user token, secret and user id are required. One or all are missing.")
 		return
 	}
 	
-	user_groups, err := xpnk_checkTwitterId.CheckTwitterId(token, secret)
+	user_groups, err := xpnk_checkTwitterId.CheckTwitterId(twitter_creds)
 	if err !=  nil {
 		c.JSON(400, err.Error())	
 	} else {
