@@ -3,22 +3,23 @@ package xpnk_checkTwitterId
 import   (
 "testing"
 "fmt"
+"xpnk-user/xpnk_createUserObject"
 )
 
 func TestCheckUserInvite(t *testing.T) {
 
-	token := "1095770999872806913-l3OUMvb8Jt2N1KdBnIbQd5CoFurIiC"
-	secret := "gWyHbf3Xskk6jJQO5q8WX9zzJeIUmAoOdRJUpQXPa0PjQ"
-	
+	var twitter_user xpnk_createUserObject.User_Object
+	twitter_user.TwitterID = "131547767"
+
 	//token := "131547767-O0v9F9vnAM1YTsyWL6500oDsXQRHuSoecObwqSM"
 	//secret := "ihNLKHTUk9010DQRMOWxISx2WrxZFLYVnXhLVj6ac"
 	
-	v, err := CheckTwitterId(token, secret)
+	v, err := CheckTwitterId(twitter_user)
 	
 	if err != nil {
 		t.Error("Expected a user ID, got ", err)
 	}
 	
-	fmt.Printf("User info: %+s", v)
+	fmt.Printf("\nUser info: %+s\n", v)
 	
 }
