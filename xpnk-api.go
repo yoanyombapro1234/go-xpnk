@@ -19,6 +19,7 @@ import (
    		 "xpnk-user/xpnk_updateUser"
    		 "xpnk-user/xpnk_insertMultiUsers"
    		 "xpnk-user/xpnk_checkTwitterId"
+   		 "xpnk-user/xpnk_checkInstaId"
    		 "xpnk-shared/db_connect"
    		 "xpnk-group/xpnk_createGroupFromSlack"
    		 "xpnk-group/xpnk_createGroup"
@@ -231,6 +232,8 @@ func main() {
 			v2.GET ("/users/groups/:id", GetUserGroups)
 			
 			v2.GET ("/users/login/twitter", LoginTwitter)
+			
+			v2.GET ("/users/login/insta", LoginInsta)
 			
 			v2.OPTIONS ("/users/authCheck", func(c *gin.Context) {
 				c.Writer.Header().Set("Access-Control-Allow-Methods", "POST, PUT")
@@ -543,12 +546,34 @@ func LoginTwitter (c *gin.Context) {
 	token := twitter_creds.TwitterToken
 	secret := twitter_creds.TwitterSecret
 	id := twitter_creds.TwitterID
-	if token == "" || secret == "" || id == "" {
-		c.JSON(400, "A user token, secret and user id are required. One or all are missing.")
+	twitter_user := twitter_creds.TwitterUser
+	if token == "" || secret == "" || id == "" || twitter_user == ""{
+		c.JSON(400, "A user token, secret, user name and user id are required. One or all are missing.")
 		return
 	}
 	
 	user_groups, err := xpnk_checkTwitterId.CheckTwitterId(twitter_creds)
+	if err !=  nil {
+		c.JSON(400, err.Error())	
+	} else {
+		c.JSON(200, user_groups)
+	}
+}
+
+func LoginInsta (c *gin.Context) {
+	var insta_creds xpnk_createUserObject.User_Object
+	var err error
+	c.Bind(&insta_creds)
+	token := insta_creds.InstaAccessToken
+	//secret := insta_creds.TwitterSecret
+	id := insta_creds.InstaUserID
+	insta_user := insta_creds.InstaUser
+	if token == "" /*|| secret == ""*/ || id == "" || insta_user == ""{
+		c.JSON(400, "A user token, secret, user name are required. One or all are missing.")
+		return
+	}
+	
+	user_groups, err := xpnk_checkInstaId.CheckInstaId(insta_creds)
 	if err !=  nil {
 		c.JSON(400, err.Error())	
 	} else {

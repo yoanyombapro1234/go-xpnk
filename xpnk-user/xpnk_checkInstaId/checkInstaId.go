@@ -1,45 +1,45 @@
-package xpnk_checkTwitterId
+package xpnk_checkInstaId
 
 /**************************************************************************************
 * Takes a user object
-* Checks Users table for the Twitter ID
-* Checks for Instagram and Disqus credentials if user found
+* Checks Users table for the Instagram ID
+* Checks for Twitter and Disqus credentials if user found
 * Checks User_Groups table for user ID associated with group ID
-* TODO change this to just a not found - If Twitter ID not found, creates new user & returns new user ID and empty groups list
-* If Twitter ID is found, returns user ID, bool values for presence of IG and Disqus credentials, and list of all user's groups
-* If Twitter ID is found, updates Twitter token & secret in user record
+* TODO change this to just a not found - If Insta ID not found, creates new user & returns new user ID and empty groups list
+* If Insta ID is found, returns user ID, bool values for presence of IG and Disqus credentials, and list of all user's groups
+* TODO If Insta ID is found, updates Insta token & secret in user record
 **************************************************************************************/
 
 import (
 	"fmt"
 	"strconv"
 	"xpnk-user/xpnk_user_structs"
-	"xpnk_twitter/get_user_by_twitter"
+	"xpnk_instagram/get_user_by_insta"
 	"xpnk-user/xpnk_get_groups"
 	//"xpnk-user/xpnk_insertMultiUsers"
 	"xpnk-user/xpnk_createUserObject"
 	"xpnk-user/xpnk_getUserObject"
 )
 
-func CheckTwitterId (twitter_user xpnk_createUserObject.User_Object) (xpnk_user_structs.UserStatus, error) {
+func CheckInstaId (insta_user xpnk_createUserObject.User_Object) (xpnk_user_structs.UserStatus, error) {
 
 	var user_status	xpnk_user_structs.UserStatus
 	
-	twitter_id := twitter_user.TwitterID
+	insta_id := insta_user.InstaUserID
 		
-	fmt.Printf("\nTwitter userid: %+v\n", twitter_id)
+	fmt.Printf("\nInsta userid: %+v \n", insta_id)
 
-	xpnk_id, err := get_user_by_twitter.GetUserByTwitter(twitter_id)
+	xpnk_id, err := get_user_by_insta.GetUserByInsta(insta_id)
 	if err != nil {
-		fmt.Printf("checkerTwitterId threw an error: %e", err)
+		fmt.Printf("checkerInstaId threw an error: %e", err)
 	} 
-	
+		
 	fmt.Printf("\nUser Xapnik id: %s", xpnk_id)
 	
 	if xpnk_id == 0 {
-		user_status.TwitterLoginNeeded = true 
-	} else {
-		user_status.TwitterLoginNeeded = false
+		user_status.InstagramLoginNeeded = true
+	} else { 
+		user_status.InstagramLoginNeeded = false
 	}
 	
 	var user_object xpnk_createUserObject.User_Object
@@ -53,10 +53,10 @@ func CheckTwitterId (twitter_user xpnk_createUserObject.User_Object) (xpnk_user_
 	
 	fmt.Printf("user_object: %+v", user_object)
 	
-	if user_object.InstaUserID == "" {
-		user_status.InstagramLoginNeeded = true
+	if user_object.TwitterID == "" {
+		user_status.TwitterLoginNeeded = true
 	} else {
-		user_status.InstagramLoginNeeded = false
+		user_status.TwitterLoginNeeded = false
 	}
 	
 	if user_object.DisqusUserID == "" {
