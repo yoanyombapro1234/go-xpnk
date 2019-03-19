@@ -67,6 +67,12 @@ func CheckInstaId (insta_user xpnk_createUserObject.User_Object) (xpnk_user_stru
 	
 	user_groups, err := xpnk_get_groups.GetGroups(xpnk_user)
 	
+	if user_object.TwitterUser != "" {
+		user_groups.ScreenName = user_object.TwitterUser
+	} else if user_object.InstaUser != "" {
+		user_groups.ScreenName = user_object.InstaUser
+	}
+	
 	user_status.UserGroups = user_groups
 	
 	fmt.Printf("\nUser_status object: %+o\n", user_status)
