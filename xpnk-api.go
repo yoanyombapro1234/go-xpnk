@@ -19,6 +19,7 @@ import (
    		 "xpnk-user/xpnk_updateUser"
    		 "xpnk-user/xpnk_insertMultiUsers"
    		 "xpnk-user/xpnk_checkTwitterId"
+   		 "xpnk-user/xpnk_checkInstaId"
    		 "xpnk-shared/db_connect"
    		 "xpnk-group/xpnk_createGroupFromSlack"
    		 "xpnk-group/xpnk_createGroup"
@@ -232,6 +233,8 @@ func main() {
 			
 			v2.GET ("/users/login/twitter", LoginTwitter)
 			
+			v2.GET ("/users/login/insta", LoginInsta)
+			
 			v2.OPTIONS ("/users/authCheck", func(c *gin.Context) {
 				c.Writer.Header().Set("Access-Control-Allow-Methods", "POST, PUT")
  				c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, token, xpnkid")
@@ -246,7 +249,7 @@ func main() {
 			})
 			v2.POST("/users", UsersNew_2)
 			
-			v2.PUT("/users/:id", UsersUpdate_2)
+			v2.PUT("/users", UsersUpdate_2)
 			v2.DELETE("/users/:id", UsersDelete)
 			
 			v2.OPTIONS ("/groups", func(c *gin.Context) {
@@ -540,15 +543,39 @@ func LoginTwitter (c *gin.Context) {
 	var twitter_creds xpnk_createUserObject.User_Object
 	var err error
 	c.Bind(&twitter_creds)
-	token := twitter_creds.TwitterToken
-	secret := twitter_creds.TwitterSecret
-	id := twitter_creds.TwitterID
-	if token == "" || secret == "" || id == "" {
-		c.JSON(400, "A user token, secret and user id are required. One or all are missing.")
+	token 				:= twitter_creds.TwitterToken
+	secret 				:= twitter_creds.TwitterSecret
+	id 					:= twitter_creds.TwitterID
+	twitter_user 		:= twitter_creds.TwitterUser
+	twitter_avatar 		:= twitter_creds.ProfileImage
+	if token == "" || secret == "" || id == "" || twitter_user == "" || twitter_avatar == ""{
+		c.JSON(400, "User token, secret, user name, user id and profile image are required. One or all are missing.")
 		return
 	}
 	
 	user_groups, err := xpnk_checkTwitterId.CheckTwitterId(twitter_creds)
+	if err !=  nil {
+		c.JSON(400, err.Error())	
+	} else {
+		c.JSON(200, user_groups)
+	}
+}
+
+func LoginInsta (c *gin.Context) {
+	var insta_creds xpnk_createUserObject.User_Object
+	var err error
+	c.Bind(&insta_creds)
+	token 				:= insta_creds.InstaAccessToken
+	//secret 			:= insta_creds.TwitterSecret
+	id 					:= insta_creds.InstaUserID
+	insta_user 			:= insta_creds.InstaUser
+	insta_avatar 		:= insta_creds.ProfileImage
+	if token == "" /*|| secret == ""*/ || id == "" || insta_user == "" || insta_avatar  == ""{
+		c.JSON(400, "User token, secret, user name, user id and profile image are required. One or all are missing.")
+		return
+	}
+	
+	user_groups, err := xpnk_checkInstaId.CheckInstaId(insta_creds)
 	if err !=  nil {
 		c.JSON(400, err.Error())	
 	} else {
@@ -580,13 +607,7 @@ func UsersUpdate_2(c *gin.Context) {
 
 	var thisUser xpnk_createUserObject.User_Object
 	var err_msg error
-	id, err := strconv.Atoi(c.Params.ByName("id"))
-	if err != nil {
-		fmt.Printf("\nError:  %+v \n", err) 
-		c.JSON(400, err)
-		return
-	}	
-	c.BindJSON(&thisUser)
+	c.Bind(&thisUser)
 	if thisUser.InstaUserID == "" && thisUser.TwitterID == "" {
 		fmt.Printf("You must send either an InstaUserID or TwitterID param, or both. If you passed an int value for either, please change it to a string.")
 		c.JSON(400, "You must send either an InstaUserID or TwitterID param, or both. If you passed an int value for either, please change it to a string.")	
@@ -598,8 +619,6 @@ func UsersUpdate_2(c *gin.Context) {
 		return
 	}
 	
-	thisUser.Id = id
-	
 	update_thisUser, err_msg 	:=  xpnk_updateUser.UpdateUser_2(thisUser)
 	if err_msg != nil {
 		fmt.Printf(err_msg.Error())
@@ -608,7 +627,7 @@ func UsersUpdate_2(c *gin.Context) {
 	}
 	
 	if update_thisUser == 1 {
-		fmt.Printf("\nthisUser updated:  %+v \n ID: %n\n", thisUser, id)
+		fmt.Printf("\nthisUser updated:  %+v \n ID: %n\n", thisUser.Id)
 		c.JSON(200, thisUser)
 	}
 }

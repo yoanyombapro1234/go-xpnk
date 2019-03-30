@@ -10,6 +10,7 @@ func TestCheckUserInvite(t *testing.T) {
 
 	var twitter_user xpnk_createUserObject.User_Object
 	twitter_user.TwitterID = "131547767"
+	twitter_user.ProfileImage = "GarbageURLForTesting"
 
 	//token := "131547767-O0v9F9vnAM1YTsyWL6500oDsXQRHuSoecObwqSM"
 	//secret := "ihNLKHTUk9010DQRMOWxISx2WrxZFLYVnXhLVj6ac"
