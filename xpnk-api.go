@@ -94,6 +94,7 @@ type XPNKUser 			struct {
 
 type UserGroups 		struct {
 	Xpnk_id				string			`db:"user_ID"			json:"user_ID"`
+	Xpnk_name			string									`json:"Xpnk_name"`			
 	Groups				[]GroupsByUser
 }
 
@@ -532,8 +533,11 @@ func GetUserGroups (c *gin.Context) {
 				group_trim.Slug 		= group_path
 				groups_trim 			= append(groups_trim, group_trim)
 			}	
-			user_groups.Xpnk_id   = user_id
-			user_groups.Groups 	  = groups_trim
+			user_groups.Xpnk_id   		= user_id
+			xpnk_name, err 				:= get_user_name(user_id)
+			if err != nil {user_groups.Xpnk_name = ""} else {
+			user_groups.Xpnk_name 		= xpnk_name }
+			user_groups.Groups 	  		= groups_trim
 			c.JSON(200, user_groups)
 		}
 	}
@@ -1222,6 +1226,33 @@ func get_user_groups(user_id string) ([]GroupOwner, error) {
 	
 	return groupOwners, err_msg
 } 
+
+func get_user_name(user_id string) (string, error){
+	dbmap := db_connect.InitDb()
+	defer dbmap.Db.Close()
+	
+	type UserNames struct {
+		Twitter_user		string		   `db:"twitter_user"`		
+		Insta_user			string		   `db:"insta_user"`			
+	} 
+	
+	var userNames			UserNames
+	var err_msg				error
+	var user_name			string
+	id						:= user_id
+	
+	err	:= dbmap.SelectOne(&userNames, "SELECT `twitter_user`, `insta_user` FROM USERS WHERE `user_ID`=?", id)
+			
+	if err != nil {
+		err_msg				= err
+	} 
+	
+	if userNames.Twitter_user != "" {
+		user_name = userNames.Twitter_user
+	} else { user_name = userNames.Insta_user } 
+	
+	return user_name, err_msg
+}
 
 func check_twitter_id(twitter_id string) int {
 	dbmap := db_connect.InitDb()
