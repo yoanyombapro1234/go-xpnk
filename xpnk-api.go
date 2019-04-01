@@ -66,8 +66,8 @@ type NewUserInvite 		struct {
 }
 
 type NewGroupMember		struct {
-	Group_ID			int						`json:"id"`
-	User_ID				int						`json:"userId"`				
+	Group_ID			int						`form:"id"		json:"id"`
+	User_ID				int						`form:"userId" 	json:"userId"`				
 }
 
 type NewGroupMemberInsert	struct {
@@ -261,12 +261,13 @@ func main() {
 			
 			v2.OPTIONS ("/groups/:id/members", func(c *gin.Context) {
 				c.Writer.Header().Set("Access-Control-Allow-Methods", "PUT")
- 				c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, token, xpnkid")
+ 				c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, token, xpnkid, id, userid")
  				c.Next()
 			})
 			v2.GET ("/groups/:id/members", GroupsByID)
 			v2.POST("/groups/", GroupsNew)
 			v2.GET ("/groups/:id/invite/:source", GroupsInvite)
+			v2.POST("/groups/add", GroupsAddMember)
 			
 			v2.OPTIONS ("/groups/:id/owner/:owner", func(c *gin.Context) {
 				c.Writer.Header().Set("Access-Control-Allow-Methods", "PUT, DELETE")
@@ -888,17 +889,20 @@ func GroupsAddMember (c *gin.Context) {
 	c.Bind(&new_groupMember)
 	fmt.Printf("\n new_groupMember.Group_ID:  %v \n", new_groupMember.Group_ID)
 	fmt.Printf("new_groupMember.User_ID:  %v \n", new_groupMember.User_ID)
-	
-	var new_member_insert   NewGroupMemberInsert
-	new_member_insert.Group_ID	= new_groupMember.Group_ID
-	new_member_insert.User_ID	= new_groupMember.User_ID
-	
-	insert_new_member 			:= InsertNewGroupMember(new_member_insert)
-	
-	if insert_new_member == 1 {
-		c.JSON(201, "User added!")
+	if new_groupMember.Group_ID < 1 || new_groupMember.User_ID < 1 {
+		c.JSON(422, gin.H{"error": "Group id or user id or both are missing."})
 	} else {
-		c.JSON(422, gin.H{"error": insert_new_member })
+		var new_member_insert   NewGroupMemberInsert
+		new_member_insert.Group_ID	= new_groupMember.Group_ID
+		new_member_insert.User_ID	= new_groupMember.User_ID
+	
+		insert_new_member 			:= InsertNewGroupMember(new_member_insert)
+	
+		if insert_new_member == 1 {
+			c.JSON(201, "User added!")
+		} else {
+			c.JSON(422, gin.H{"error": insert_new_member })
+		}
 	}
 }
 
