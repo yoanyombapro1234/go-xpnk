@@ -14,7 +14,6 @@ import (
    		 "xpnk_constants"
    		 "xpnk_auth"
    		 "xpnk-api/users"
-   		 "xpnk-user/xpnk_checkUserInvite"
    		 "xpnk-user/xpnk_createUserInsert" //v.1 to be deprecated
    		 "xpnk-user/xpnk_createUserObject"
    		 "xpnk-user/xpnk_updateUser"
@@ -218,18 +217,18 @@ func main() {
 			v2.GET("/users/ig/:id", users.UsersByIGID_2)
 			
 			v2.OPTIONS ("/users/invite", func(c *gin.Context) {
-			    c.Writer.Header().Set("Access-Control-Allow-Methods", "POST, PUT")
+			    c.Writer.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT")
  				c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, token, xpnkid")
  				c.Next()
 			})
-			v2.GET ("/users/invite", CheckUserInvite)
+			v2.GET ("/users/invite", users.CheckUserInvite)
 			
 			v2.OPTIONS ("/users/authSet", func(c *gin.Context) {
 				c.Writer.Header().Set("Access-Control-Allow-Methods", "POST, PUT")
  				c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, token, xpnkid")
  				c.Next()
 			})
-			v2.GET ("/users/authSet", XPNKAuthSet)
+			v2.GET ("/users/authSet", users.XPNKAuthSet)
 			
 			v2.GET ("/users/groups/:id", GetUserGroups)
 			
@@ -243,6 +242,13 @@ func main() {
  				c.Next()
 			})
 			v2.POST ("/users/authCheck", XPNKAuthCheck)
+			
+			v2.OPTIONS ("/xpnk_auth_set", func(c *gin.Context) {
+				c.Writer.Header().Set("Access-Control-Allow-Methods", "POST, PUT")
+ 				c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, token, xpnkid")
+ 				c.Next()
+			})
+			v2.GET ("/xpnk_auth_set", users.XPNKAuthSet)
 			
 			v2.OPTIONS ("/users", func(c *gin.Context) {
 				c.Writer.Header().Set("Access-Control-Allow-Methods", "POST, PUT")
@@ -331,14 +337,14 @@ func main() {
  				c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, token, xpnkid")
  				c.Next()
 			})
-			v1.GET ("/check_user_invite", CheckUserInvite)
+			v1.GET ("/check_user_invite", users.CheckUserInvite)
 			
 			v1.OPTIONS ("/xpnk_auth_set", func(c *gin.Context) {
 				c.Writer.Header().Set("Access-Control-Allow-Methods", "POST, PUT")
  				c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, token, xpnkid")
  				c.Next()
 			})
-			v1.GET ("/xpnk_auth_set", XPNKAuthSet)
+			v1.GET ("/xpnk_auth_set", users.XPNKAuthSet)
 			
 			v1.OPTIONS ("/xpnk_auth_check", func(c *gin.Context) {
 				c.Writer.Header().Set("Access-Control-Allow-Methods", "POST, PUT")
@@ -812,21 +818,6 @@ func SlackCommandHandler (c *gin.Context) {
 	}
 }
 
-func CheckUserInvite (c *gin.Context) {
-	var user_invite			NewUserInvite
-	var user_invite_check	xpnk_checkUserInvite.GroupObj
-	c.Bind(&user_invite)
-	fmt.Printf("CheckUserInvite Xpnk_token:  %v \n", user_invite.Xpnk_token)
-	fmt.Printf("CheckUserInvite Group_name:  %v \n", user_invite.Group_name)
-	
-	user_invite_check		= xpnk_checkUserInvite.CheckUserInvite(user_invite.Xpnk_token, user_invite.Group_name)
-	if user_invite_check.GroupName == user_invite.Group_name {
-		c.JSON(201, user_invite_check)
-	} else {
-		c.JSON(400, user_invite_check)
-	}
-}
-
 func GroupsByID (c *gin.Context) {
 	var groupid 	string
 	groupid 		= c.Param("id")
@@ -872,17 +863,6 @@ func GroupsAddMember (c *gin.Context) {
 		} else {
 			c.JSON(422, gin.H{"error": insert_new_member })
 		}
-	}
-}
-
-func XPNKAuthSet (c *gin.Context)  {
-	usertoken, err := xpnk_auth.NewToken([]byte(mySigningKey), "", "")
-	if usertoken != "" {
-		response := usertoken
-		c.JSON(201, response)
-	} 	else {
-		fmt.Printf("ERROR: %v+", err)
-		c.JSON(422,gin.H{"error":"No access token created."})
 	}
 }
 
