@@ -13,6 +13,7 @@ import (
    		 "errors"
    		 "xpnk_constants"
    		 "xpnk_auth"
+   		 "xpnk-api/users"
    		 "xpnk-user/xpnk_checkUserInvite"
    		 "xpnk-user/xpnk_createUserInsert" //v.1 to be deprecated
    		 "xpnk-user/xpnk_createUserObject"
@@ -207,14 +208,14 @@ func main() {
  				c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, id, xpnkid, token")
  				c.Next()
 			})
-			v2.GET("/users/twitter/:id", UsersByTwitterID_2)
+			v2.GET("/users/twitter/:id", users.UsersByTwitterID_2)
 			
 			v2.OPTIONS ("/users/ig/:id", func(c *gin.Context) {
 				c.Writer.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT")
  				c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, id, xpnkid, token")
  				c.Next()
 			})
-			v2.GET("/users/ig/:id", UsersByIGID_2)
+			v2.GET("/users/ig/:id", users.UsersByIGID_2)
 			
 			v2.OPTIONS ("/users/invite", func(c *gin.Context) {
 			    c.Writer.Header().Set("Access-Control-Allow-Methods", "POST, PUT")
@@ -396,7 +397,7 @@ func main() {
  				c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, id, xpnkid, token")
  				c.Next()
 			})
-			v1.GET("/users/twitter", UsersByTwitterID)
+			v1.GET("/users/twitter", users.UsersByTwitterID)
 						
 			v1.OPTIONS ("/twitter_auth", func(c *gin.Context) {
 				c.Writer.Header().Set("Access-Control-Allow-Methods", "POST, PUT")
@@ -410,7 +411,7 @@ func main() {
  				c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, id, xpnkid, token")
  				c.Next()
 			})
-			v1.GET("/users/ig", UsersByIGID)
+			v1.GET("/users/ig", users.UsersByIGID)
 									
 			v1.OPTIONS ("/disqus_auth", func(c *gin.Context) {
 				c.Writer.Header().Set("Access-Control-Allow-Methods", "POST, PUT")
@@ -472,38 +473,6 @@ func Cors() gin.HandlerFunc {
 * V2
 *****************************************/
 
-func UsersByTwitterID_2 (c *gin.Context) {
-	twitter_id					:= c.Param("id")
-	var user					XPNKUser 	
-	var err_msg					error		
-	fmt.Printf("twitter_id:  %v \n", twitter_id)
-	if twitter_id == "" {
-		c.JSON(422, gin.H{"error": "Invalid or missing Twitter user ID."})
-	} else {
-		user, err_msg 			= get_user_by_twitter(twitter_id)
-		if user.Twitter_ID != twitter_id {
-			c.JSON(400, err_msg.Error())
-		} else {
-			c.JSON(200, user)
-		}
-	}
-}
-
-func UsersByIGID_2 (c *gin.Context) {
-	ig_ID					 := c.Param("id")
-	var user					XPNKUser
-	var err_msg					error
-	if ig_ID == "" {
-		c.JSON(422, gin.H{"error": "Invalid or missing Twitter user ID."})
-	} else {
-		user, err_msg 		  = get_user_by_ig(ig_ID)
-		if user.Insta_userid != ig_ID {
-			c.JSON(400, err_msg.Error())
-		} else {
-			c.JSON(200, user)
-		}
-	}
-}
 
 func GetUserGroups (c *gin.Context) { 
 	var groups					[]GroupOwner
@@ -1010,26 +979,7 @@ func UsersUpdate (c *gin.Context) {
 	}	
 }
 
-func UsersByTwitterID (c *gin.Context) {
-	var twitterId				TwitterID
-	var user					XPNKUser 
-	var err_msg					error			
-	c.Bind(&twitterId)
-	twitter_id					:= twitterId.Twttr_userid
-	fmt.Printf("twitter_id:  %v \n", twitter_id)
-	if twitter_id == "" {
-		c.JSON(422, gin.H{"error": "Invalid or missing Twitter user ID."})
-	} else {
-		user, err_msg 			= get_user_by_twitter(twitter_id)
-		if user.Twitter_ID != twitter_id {
-			c.JSON(202, user)
-			fmt.Printf("error:  %v \n", err_msg)
-		} else {
-			c.JSON(200, user)
-		}
-	}
-}
-
+/*
 func UsersByIGID (c *gin.Context) {
 	var igID					IGID
 	var user					XPNKUser
@@ -1049,6 +999,7 @@ func UsersByIGID (c *gin.Context) {
 		}
 	}
 }
+*/
 
 func PostTwttrAuth(c *gin.Context) {
 	var twitter_user			NewTwitterAuth
@@ -1171,25 +1122,6 @@ func getXPNKUser(slackuserid string) int {
 	}
 	
 	return xpnkid
-}
-
-func get_user_by_twitter(twitter_id string) (XPNKUser, error) {
-	dbmap := db_connect.InitDb()
-	defer dbmap.Db.Close()
-	
-	var xpnkUser			XPNKUser
-	var err_msg				error
-	twitterId				:= twitter_id
-	
-	err	:= dbmap.SelectOne(&xpnkUser, "SELECT `user_ID`, `twitter_user`, `twitter_ID`, `twitter_authtoken`, `twitter_secret`, `insta_user`, `insta_userid`, `insta_accesstoken`, `disqus_username`, `disqus_userid`, `disqus_accesstoken`, `profile_image` FROM USERS WHERE twitter_ID=?", twitterId)
-	if err != nil {
-		fmt.Printf("\n==========\nget_user_by_twitter - Problemz with selecting user by twitterID: \n%+v\n",err)
-		err_msg = err
-		fmt.Printf("\n==========\nget_user_by_twitter - Problemz with selecting user by twitterID: \n%+v\n",err_msg)
-	} else {
-		fmt.Printf("\n==========\nfound user: \n%+v\n",xpnkUser.User_ID)
-	}
-	return xpnkUser, err_msg
 }
 
 func get_user_by_ig(ig_id string) (XPNKUser, error) {
