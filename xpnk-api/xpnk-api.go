@@ -228,7 +228,7 @@ func main() {
 			})
 			v2.GET ("/users/authSet", users.XPNKAuthSet)
 			
-			v2.GET ("/users/groups/:id", GetUserGroups)
+			v2.GET ("/users/groups/:id", users.GetGroups)
 			
 			v2.GET ("/users/login/twitter", LoginTwitter)
 			
@@ -476,46 +476,6 @@ func Cors() gin.HandlerFunc {
 /*****************************************
 * V2
 *****************************************/
-
-
-func GetUserGroups (c *gin.Context) { 
-	var groups					[]GroupOwner
-	var group_trim				GroupsByUser
-	var	groups_trim				[]GroupsByUser
-	var user_groups				UserGroups
-	var err_msg					error
-	user_id						:= c.Params.ByName("id")
-	
-	if user_id == "" {
-		c.JSON(422, gin.H{"error": "Invalid or missing user ID."})
-		return
-	} else {
-		groups, err_msg 		  = get_user_groups(user_id)
-		if err_msg != nil {
-			c.JSON(400, err_msg.Error())
-		} else {	
-			for i := 0; i < len(groups); i++ {
-				var this_group GroupOwner
-				this_group = groups[i]
-				group_name				:= strings.ToLower(this_group.Name)
-				group_path	 			:= strings.Replace(group_name, " ", "-", -1)
-				
-				group_trim.Group_ID 	= this_group.Group_ID
-				group_trim.Owner 		= this_group.Owner.Bool
-				group_trim.Admin		= this_group.Admin.Bool
-				group_trim.Name			= this_group.Name
-				group_trim.Slug 		= group_path
-				groups_trim 			= append(groups_trim, group_trim)
-			}	
-			user_groups.Xpnk_id   		= user_id
-			xpnk_name, err 				:= get_user_name(user_id)
-			if err != nil {user_groups.Xpnk_name = ""} else {
-			user_groups.Xpnk_name 		= xpnk_name }
-			user_groups.Groups 	  		= groups_trim
-			c.JSON(200, user_groups)
-		}
-	}
-} 
 
 func LoginTwitter (c *gin.Context) {
 	var twitter_creds xpnk_createUserObject.User_Object
@@ -1084,55 +1044,6 @@ func get_user_by_ig(ig_id string) (XPNKUser, error) {
 	return xpnkUser, err_msg
 }
 
-func get_user_groups(user_id string) ([]GroupOwner, error) {
-	dbmap := db_connect.InitDb()
-	defer dbmap.Db.Close()
-
-	var groupOwners			[]GroupOwner
-	var err_msg				error
-	
-	id						:= user_id
-	
-	_, err := dbmap.Select(&groupOwners, "SELECT `USER_GROUPS`.`Group_ID`, `USER_GROUPS`.`group_owner`, `USER_GROUPS`.`group_admin`, `GROUPS`.`group_name` FROM USER_GROUPS INNER JOIN GROUPS ON `USER_GROUPS`.`Group_ID` = `GROUPS`.`Group_ID` WHERE `USER_GROUPS`.`user_ID` =?", id)
-		
-	/*
-	SELECT `USER_GROUPS`.`Group_ID`, `USER_GROUPS`.`group_owner`, `USER_GROUPS`.`group_admin`, `groups`.`group_name` FROM USER_GROUPS INNER JOIN groups ON `USER_GROUPS`.`Group_ID` = `groups`.`Group_ID` WHERE `USER_GROUPS`.`user_ID` = 1;
-	*/
-	
-	if err != nil {
-		err_msg				= err
-	} 
-	
-	return groupOwners, err_msg
-} 
-
-func get_user_name(user_id string) (string, error){
-	dbmap := db_connect.InitDb()
-	defer dbmap.Db.Close()
-	
-	type UserNames struct {
-		Twitter_user		string		   `db:"twitter_user"`		
-		Insta_user			string		   `db:"insta_user"`			
-	} 
-	
-	var userNames			UserNames
-	var err_msg				error
-	var user_name			string
-	id						:= user_id
-	
-	err	:= dbmap.SelectOne(&userNames, "SELECT `twitter_user`, `insta_user` FROM USERS WHERE `user_ID`=?", id)
-			
-	if err != nil {
-		err_msg				= err
-	} 
-	
-	if userNames.Twitter_user != "" {
-		user_name = userNames.Twitter_user
-	} else { user_name = userNames.Insta_user } 
-	
-	return user_name, err_msg
-}
-
 func check_twitter_id(twitter_id string) int {
 	dbmap := db_connect.InitDb()
 	defer dbmap.Db.Close()
@@ -1148,39 +1059,6 @@ func check_twitter_id(twitter_id string) int {
 	}
 	return xpnkid
 }
-
-/*
-func updateTwitter(new_TwitterAuth NewTwitterAuth) string{
-	
-	dbmap := db_connect.InitDb()
-	defer dbmap.Db.Close()
-	dbmap.AddTableWithName(NewTwitterAuthInsert{}, "USERS").SetKeys(true, "Xpnk_id")
-	
-	var user_xpnkid string
-	err := dbmap.SelectOne(&user_xpnkid, "SELECT user_ID FROM USERS WHERE user_ID=?", new_TwitterAuth.Xpnk_id)
-	fmt.Printf("\n==========\nXPNK_ID: %+v", user_xpnkid)
-	
-	if err == nil && user_xpnkid == new_TwitterAuth.Xpnk_id {
-		var new_Twttrauthinsert NewTwitterAuthInsert
-		new_Twttrauthinsert.Xpnk_id = user_xpnkid
-		new_Twttrauthinsert.Twttr_accesstoken = new_TwitterAuth.Twttr_accesstoken
-	 	new_Twttrauthinsert.Twttr_secret = new_TwitterAuth.Twttr_secret	 
-	 	new_Twttrauthinsert.Twttr_userid = new_TwitterAuth.Twttr_userid
-	 	new_Twttrauthinsert.Twttr_username = new_TwitterAuth.Twttr_username
-		
-		_, dberr := dbmap.Update(&new_Twttrauthinsert)
-		if dberr == nil {
-			fmt.Printf("\n==========\nNewTwitterAuth Update Success!")
-		} else {
-			fmt.Printf("\n==========\nProblemz with update: \n%+v\n",dberr)
-		}
-	} else {
-		fmt.Printf("\n==========\nProblemz with select: \n%+v\n",err)
-	}
-	
-	return "updated"
-} 
-*/
 
 func check_ig_id (ig_id string) int {
 	dbmap := db_connect.InitDb()
