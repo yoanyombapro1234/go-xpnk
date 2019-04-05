@@ -16,8 +16,6 @@ import (
    		 "xpnk-api/users"
    		 "xpnk-user/xpnk_createUserObject"
    		 "xpnk-user/xpnk_updateUser"
-   		 "xpnk-user/xpnk_checkTwitterId"
-   		 "xpnk-user/xpnk_checkInstaId"
    		 "xpnk-shared/db_connect"
    		 "xpnk-group/xpnk_createGroupFromSlack"
    		 "xpnk-group/xpnk_createGroup"
@@ -230,9 +228,9 @@ func main() {
 			
 			v2.GET ("/users/groups/:id", users.GetGroups)
 			
-			v2.GET ("/users/login/twitter", LoginTwitter)
+			v2.GET ("/users/login/twitter", users.LoginTwitter)
 			
-			v2.GET ("/users/login/insta", LoginInsta)
+			v2.GET ("/users/login/insta", users.LoginInsta)
 			
 			v2.OPTIONS ("/users/authCheck", func(c *gin.Context) {
 				c.Writer.Header().Set("Access-Control-Allow-Methods", "POST, PUT")
@@ -476,50 +474,6 @@ func Cors() gin.HandlerFunc {
 /*****************************************
 * V2
 *****************************************/
-
-func LoginTwitter (c *gin.Context) {
-	var twitter_creds xpnk_createUserObject.User_Object
-	var err error
-	c.Bind(&twitter_creds)
-	token 				:= twitter_creds.TwitterToken
-	secret 				:= twitter_creds.TwitterSecret
-	id 					:= twitter_creds.TwitterID
-	twitter_user 		:= twitter_creds.TwitterUser
-	twitter_avatar 		:= twitter_creds.ProfileImage
-	if token == "" || secret == "" || id == "" || twitter_user == "" || twitter_avatar == ""{
-		c.JSON(400, "User token, secret, user name, user id and profile image are required. One or all are missing.")
-		return
-	}
-	
-	user_groups, err := xpnk_checkTwitterId.CheckTwitterId(twitter_creds)
-	if err !=  nil {
-		c.JSON(400, err.Error())	
-	} else {
-		c.JSON(200, user_groups)
-	}
-}
-
-func LoginInsta (c *gin.Context) {
-	var insta_creds xpnk_createUserObject.User_Object
-	var err error
-	c.Bind(&insta_creds)
-	token 				:= insta_creds.InstaAccessToken
-	//secret 			:= insta_creds.TwitterSecret
-	id 					:= insta_creds.InstaUserID
-	insta_user 			:= insta_creds.InstaUser
-	insta_avatar 		:= insta_creds.ProfileImage
-	if token == "" /*|| secret == ""*/ || id == "" || insta_user == "" || insta_avatar  == ""{
-		c.JSON(400, "User token, secret, user name, user id and profile image are required. One or all are missing.")
-		return
-	}
-	
-	user_groups, err := xpnk_checkInstaId.CheckInstaId(insta_creds)
-	if err !=  nil {
-		c.JSON(400, err.Error())	
-	} else {
-		c.JSON(200, user_groups)
-	}
-}
 
 func UsersUpdate_2(c *gin.Context) {
 
