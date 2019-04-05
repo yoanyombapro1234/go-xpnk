@@ -14,9 +14,11 @@ type User_Insert struct {
 	SlackName			string		`db:"slack_name"			json:"SlackName"`
 	SlackID				string		`db:"slack_userid"			json:"SlackID"`
 	SlackAvatar			string		`db:"slack_avatar"			json:"SlackAvatar"`
+	SlackAuth			string		`db:"slack_authtoken"		json:"SlackAuth"`
 	TwitterUser			string		`db:"twitter_user"			json:"TwitterUser"`
 	TwitterID			string		`db:"twitter_ID"			json:"TwitterID"`
 	TwitterToken		string		`db:"twitter_authtoken"		json:"TwitterToken"`
+	TwitterSecret		string		`db:"twitter_secret"		json:"TwitterSecret"`
 	LastTweet			string		`db:"last_tweet"			json:"LastTweet"`
 	InstaUser			string		`db:"insta_user"			json:"InstaUser"`
 	InstaUserID			string		`db:"insta_userid"			json:"InstaUserID"`
