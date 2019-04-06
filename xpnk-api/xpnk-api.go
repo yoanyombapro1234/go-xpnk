@@ -9,7 +9,6 @@ import (
    		 "database/sql"
    		 "strings"
    		 "strconv"
-   		 //"errors"
    		 "xpnk_constants"
    		 "xpnk_auth"
    		 "xpnk-api/users"
@@ -17,8 +16,6 @@ import (
    		 "xpnk-user/xpnk_updateUser"
    		 "xpnk-shared/db_connect"
    		 "xpnk-group/xpnk_createGroupFromSlack"
-   		 "xpnk-group/xpnk_createGroup"
-   		 "xpnk-group/xpnk_createInvite"
    		 "xpnk_slack"
  )
  
@@ -267,8 +264,8 @@ func main() {
  				c.Next()
 			})
 			v2.GET ("/groups/:id/members", groups.GroupsByID)
-			v2.POST("/groups/", GroupsNew)
-			v2.GET ("/groups/:id/invite/:source", GroupsInvite)
+			v2.POST("/groups/", groups.GroupsNew)
+			v2.GET ("/groups/:id/invite/:source", groups.GroupsInvite)
 			v2.POST("/groups/add", GroupsAddMember)
 			
 			v2.OPTIONS ("/groups/:id/owner/:owner", func(c *gin.Context) {
@@ -434,9 +431,6 @@ func main() {
 			})
 			v1.GET ("/groups/members/:id", groups.GroupsByID)
 			
-			//v1.GET("/groups/:userId", GroupsByUser)
-			//v1.GET("/groups/:name", GroupsByGroupName)
-			
 			v1.OPTIONS ("/groups/add", func(c *gin.Context) {
 				c.Writer.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT")
  				c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, id, userId, xpnkid, token")
@@ -473,39 +467,6 @@ func Cors() gin.HandlerFunc {
 /*****************************************
 * V2
 *****************************************/
-
-func GroupsNew (c *gin.Context) {
-	var newGroup				xpnk_createGroup.NewGroup
-	var err_msg					error
-	c.Bind(&newGroup)
-	fmt.Printf("newGroup to add:  %+v \n", newGroup)
-	if newGroup.GroupName == "" {
-		c.JSON(400, "A group name is required to create a new group.")
-		return
-	}
-	
-	newID, err_msg 			:=  xpnk_createGroup.CreateGroup(newGroup)
-	if err_msg != nil {
-		c.JSON(400, err_msg.Error())	
-	} else {
-		c.JSON(200, newID)
-	}
-}
-
-func GroupsInvite (c *gin.Context) {
-	id, err 				:= strconv.Atoi(c.Params.ByName("id"))
-	if err != nil {
-		c.JSON( 400, err.Error())
-		return
-	}
-	source		 			:= c.Params.ByName("source")	
-	response, err			:= xpnk_createInvite.CreateInvite(id, source, "")
-	if err != nil {
-		c.JSON( 400, err.Error())
-		return
-	}
-	c.JSON(200, response)
-}
 
 func GroupsDelete (c *gin.Context) {
 	groupid		 			:= 	c.Params.ByName("id")
