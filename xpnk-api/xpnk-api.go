@@ -56,16 +56,18 @@ type NewUserInvite 		struct {
 	Xpnk_token			string					`form:"xpnk_token" binding:"required"`
 	Group_name			string					`form:"xpnk_group_name" binding:"required"`
 }
-
+/*
 type NewGroupMember		struct {
 	Group_ID			int						`form:"id"		json:"id"`
 	User_ID				int						`form:"userId" 	json:"userId"`				
 }
-
+*/
+/*
 type NewGroupMemberInsert	struct {
 	Group_ID			int						`db:"Group_ID"`
 	User_ID				int						`db:"user_ID"`				
 }
+*/
 
 type XPNKUser 			struct {
 	User_ID				int			   `db:"user_ID"			json:"user_ID"`
@@ -266,7 +268,7 @@ func main() {
 			v2.GET ("/groups/:id/members", groups.GroupsByID)
 			v2.POST("/groups/", groups.GroupsNew)
 			v2.GET ("/groups/:id/invite/:source", groups.GroupsInvite)
-			v2.POST("/groups/add", GroupsAddMember)
+			v2.POST("/groups/add", groups.GroupsAddMember)
 			
 			v2.OPTIONS ("/groups/:id/owner/:owner", func(c *gin.Context) {
 				c.Writer.Header().Set("Access-Control-Allow-Methods", "PUT, DELETE")
@@ -436,7 +438,7 @@ func main() {
  				c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, id, userId, xpnkid, token")
  				c.Next()
 			})
-			v1.POST("/groups/add", GroupsAddMember)
+			v1.POST("/groups/add", groups.GroupsAddMember)
 			
 			v1.OPTIONS ("/groups/id/:name", func(c *gin.Context) {
 				c.Writer.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT")
@@ -610,28 +612,6 @@ func GroupID (c *gin.Context) {
 	} else {
 		c.JSON(422, gin.H{"error": "No groupname was sent."})
 	}		 
-}
-
-func GroupsAddMember (c *gin.Context) {
-	var new_groupMember		NewGroupMember
-	c.Bind(&new_groupMember)
-	fmt.Printf("\n new_groupMember.Group_ID:  %v \n", new_groupMember.Group_ID)
-	fmt.Printf("new_groupMember.User_ID:  %v \n", new_groupMember.User_ID)
-	if new_groupMember.Group_ID < 1 || new_groupMember.User_ID < 1 {
-		c.JSON(422, gin.H{"error": "Group id or user id or both are missing."})
-	} else {
-		var new_member_insert   NewGroupMemberInsert
-		new_member_insert.Group_ID	= new_groupMember.Group_ID
-		new_member_insert.User_ID	= new_groupMember.User_ID
-	
-		insert_new_member 			:= InsertNewGroupMember(new_member_insert)
-	
-		if insert_new_member == 1 {
-			c.JSON(201, "User added!")
-		} else {
-			c.JSON(422, gin.H{"error": insert_new_member })
-		}
-	}
 }
 
 func XPNKReadHeader (c *gin.Context) int{
@@ -935,22 +915,6 @@ func updateDisqus(new_Disqusauth NewDisqusAuth) string{
 	return "updated"
 } 
 
-func InsertNewGroupMember(new_GroupMember NewGroupMemberInsert) int {
-	var returnVal 				int
-	dbmap := db_connect.InitDb()
-	defer dbmap.Db.Close()
-	dbmap.AddTableWithName(NewGroupMemberInsert{}, "USER_GROUPS")
-		
-	err := dbmap.Insert(&new_GroupMember)	
-		if err == nil {
-			fmt.Printf("\n==========\nInsertNewGroupMember Update Success!")
-			returnVal = 1
-		} else {
-			fmt.Printf("\n==========\nProblemz with InsertNewGroupMember line 700 in api: \n%+v\n",err)
-			returnVal = 0
-		}
-	return returnVal	
-}
 /*
 func getGroup (groupID string) []int{
 	var groupUsers			[]int
