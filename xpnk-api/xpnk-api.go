@@ -9,12 +9,10 @@ import (
    		 "database/sql"
    		 "strings"
    		 "strconv"
-   		 "reflect"
    		 "errors"
    		 "xpnk_constants"
    		 "xpnk_auth"
    		 "xpnk-api/users"
-   		 "xpnk-user/xpnk_createUserObject"
    		 "xpnk-user/xpnk_updateUser"
    		 "xpnk-shared/db_connect"
    		 "xpnk-group/xpnk_createGroupFromSlack"
@@ -155,7 +153,7 @@ type NewDisqusAuthInsert struct {
 }
 
 const (
-	mySigningKey = ""
+	mySigningKey = xpnk_constants.SigningKey
 )
 
 type Person struct {
@@ -237,7 +235,7 @@ func main() {
  				c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, token, xpnkid")
  				c.Next()
 			})
-			v2.POST ("/users/authCheck", XPNKAuthCheck)
+			v2.POST ("/users/authCheck", users.XPNKAuthCheck)
 			
 			v2.OPTIONS ("/xpnk_auth_set", func(c *gin.Context) {
 				c.Writer.Header().Set("Access-Control-Allow-Methods", "POST, PUT")
@@ -253,7 +251,7 @@ func main() {
 			})
 			v2.POST("/users", users.UsersNew_2)
 			
-			v2.PUT("/users", UsersUpdate_2)
+			v2.PUT("/users", users.UsersUpdate_2)
 			v2.DELETE("/users/:id", UsersDelete)
 			
 			v2.OPTIONS ("/groups", func(c *gin.Context) {
@@ -347,14 +345,14 @@ func main() {
  				c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, token, xpnkid")
  				c.Next()
 			})
-			v1.POST ("/xpnk_auth_check", XPNKAuthCheck)
+			v1.POST ("/xpnk_auth_check", users.XPNKAuthCheck)
 			
 			v1.OPTIONS ("/get_xpnkid/slack/:id", func(c *gin.Context) {
 				c.Writer.Header().Set("Access-Control-Allow-Methods", "POST, PUT")
  				c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, token, xpnkid")
  				c.Next()
 			})
-			v1.GET ("/get_xpnkid/slack/:id", GetXPNK_ID)
+			v1.GET ("/get_xpnkid/slack/:id", users.GetXPNK_ID)
 			
 			/*
 			v1.OPTIONS ("/xpnk_read_header", func(c *gin.Context) {
@@ -474,35 +472,6 @@ func Cors() gin.HandlerFunc {
 /*****************************************
 * V2
 *****************************************/
-
-func UsersUpdate_2(c *gin.Context) {
-
-	var thisUser xpnk_createUserObject.User_Object
-	var err_msg error
-	c.Bind(&thisUser)
-	if thisUser.InstaUserID == "" && thisUser.TwitterID == "" {
-		fmt.Printf("You must send either an InstaUserID or TwitterID param, or both. If you passed an int value for either, please change it to a string.")
-		c.JSON(400, "You must send either an InstaUserID or TwitterID param, or both. If you passed an int value for either, please change it to a string.")	
-		return
-	}
-		
-	if (reflect.TypeOf(thisUser.InstaUserID).String()) != "string" || (reflect.TypeOf(thisUser.TwitterID).String()) != "string" {
-		c.JSON(400, "TwitterID and InstaUserID values must be strings. Please check.")
-		return
-	}
-	
-	update_thisUser, err_msg 	:=  xpnk_updateUser.UpdateUser_2(thisUser)
-	if err_msg != nil {
-		fmt.Printf(err_msg.Error())
-		c.JSON(400, err_msg.Error())
-		return
-	}
-	
-	if update_thisUser == 1 {
-		fmt.Printf("\nthisUser updated:  %+v \n ID: %n\n", thisUser.Id)
-		c.JSON(200, thisUser)
-	}
-}
 
 func UsersDelete (c *gin.Context) {
 	userid, err 			:= 	strconv.Atoi(c.Params.ByName("id"))
@@ -779,37 +748,6 @@ func XPNKReadHeader (c *gin.Context) int{
 	}
 }
 
-func XPNKAuthCheck (c *gin.Context) {
-	fmt.Printf("HEADER: %+v  END\n", c.Request.Header)
-	var this_header http.Header
-	this_header = c.Request.Header
-	token := this_header["Token"]
-	if len(token) != 0  {
-		fmt.Printf("TOKEN ONLY:  %+v", this_header["Token"][0])
-		auth := xpnk_auth.ParseToken(token[0], mySigningKey)
-		if auth == 1 {
-			c.JSON(200, gin.H{"success":"You're clear for take off."})
-		} else {
-			c.JSON(422, gin.H{"error": "Token can't be authenticated."})
-		}
-	} else {
-		c.JSON(422, gin.H{"error": "No access token was sent."})
-	}
-}
-
-func GetXPNK_ID (c *gin.Context) {
-	var slackuserid string
-	slackuserid = c.Param("id")
-	
-	if slackuserid != "" {
-		xpnkuserid := getXPNKUser(slackuserid)	
-		fmt.Printf("\nXPNKUSERID RETURNED BY GetXPNK_ID: %+v\n", xpnkuserid)	 
-		c.JSON(201, xpnkuserid) 
-	} else {
-		c.JSON(422, gin.H{"error": "No slackid was sent."})
-	}		 	
-}
-
 func SlackNewMember (c *gin.Context) {
 	var slackuser NewSlackAuth
 	c.Bind(&slackuser)
@@ -963,22 +901,6 @@ func getUserByTwitter(twitter_id string) int {
 	}
 	
 	return return_id
-}
-
-func getXPNKUser(slackuserid string) int {
-	dbmap := db_connect.InitDb()
-	defer dbmap.Db.Close()
-	slackid := slackuserid
-	var user_xpnkid int
-	err := dbmap.SelectOne(&user_xpnkid, "SELECT user_ID FROM USERS WHERE slack_userid=?", slackid)
-	var xpnkid int
-	if err == nil {
-		xpnkid = user_xpnkid
-	} else {
-		fmt.Printf("\n==========\nProblemz with selecting user_xpnkid: \n%+v\n",err)
-	}
-	
-	return xpnkid
 }
 
 func get_user_by_ig(ig_id string) (XPNKUser, error) {
