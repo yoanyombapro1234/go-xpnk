@@ -275,7 +275,7 @@ func main() {
  				c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, token, xpnkid")
  				c.Next()
 			})
-			v2.DELETE("/groups/:id/owner/:owner", GroupsDelete)
+			v2.DELETE("/groups/:id/owner/:owner", groups.GroupsDelete)
 			
 			v2.OPTIONS ("groups/:id/user/:user/owner/:owner", func(c *gin.Context) {
 				c.Writer.Header().Set("Access-Control-Allow-Methods", "PUT, DELETE")
@@ -469,7 +469,7 @@ func Cors() gin.HandlerFunc {
 /*****************************************
 * V2
 *****************************************/
-
+/*
 func GroupsDelete (c *gin.Context) {
 	groupid		 			:= 	c.Params.ByName("id")
 	ownerid		 			:= 	c.Params.ByName("owner")
@@ -498,6 +498,7 @@ func GroupsDelete (c *gin.Context) {
 		}	
 	}		 
 }
+*/
 
 /*****************************************
 * V1
@@ -946,7 +947,7 @@ func getGroupID (groupName string) int{
 		return groupID
 	}
 }
-
+/*
 func delGroup (groupID string, ownerID string) (int64, error) {
 	type Group struct {
 		Group_ID 			int 			`db:"Group_ID"`
@@ -990,7 +991,8 @@ func delGroup (groupID string, ownerID string) (int64, error) {
 	
 	return count, err
 }
-
+*/
+/*
 func delGroupUsers (groupID int) (sql.Result, error) {
 	dbmap 					:= db_connect.InitDb()
 	defer dbmap.Db.Close()
@@ -1005,5 +1007,5 @@ func delGroupUsers (groupID int) (sql.Result, error) {
 	
 	return res, err
 }
-	
+*/	
 //Maps are not inherently safe for concurrency - will have to use sync.RWMutex	
