@@ -1,6 +1,7 @@
 package main
 
 import (
+		"fmt"
          "github.com/gin-gonic/gin"
    		 _ "github.com/go-sql-driver/mysql"
    		 "xpnk_constants"
@@ -42,6 +43,7 @@ func main() {
 			v2.GET ("/users/groups/:id", users.GetGroups)
 			v2.GET ("/users/login/twitter", users.LoginTwitter)
 			v2.GET ("/users/login/insta", users.LoginInsta)
+			
 			
 			v2.POST("/users", users.UsersNew_2)
 			v2.POST ("/users/authCheck", users.XPNKAuthCheck)
@@ -104,6 +106,14 @@ func main() {
 func Cors() gin.HandlerFunc {
  return func(c *gin.Context) {
  c.Writer.Header().Add("Access-Control-Allow-Origin", "*")
- c.Next()
+ c.Writer.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE")
+ c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, id, xpnkid, token")
+ 
+ if c.Request.Method == "OPTIONS" {
+ 	fmt.Println("OPTIONS")
+ 	c.AbortWithStatus(200)
+ } else {
+ 	c.Next()
+ 	}	
  }
 }
