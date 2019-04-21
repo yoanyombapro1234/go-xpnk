@@ -13,9 +13,8 @@ import (
 const (
 	mySigningKey = xpnk_constants.SigningKey
 )
-	 
-func main() {
 
+func setupRouter() *gin.Engine {
 	r := gin.Default()
 	r.Use(Cors())
 	r.Static("api/v1/data", "../xpnk-data/")
@@ -47,6 +46,7 @@ func main() {
 			
 			v2.POST("/users", users.UsersNew_2)
 			v2.POST ("/users/authCheck", users.XPNKAuthCheck)
+			v2.POST ("users/saveSub", users.SaveSub)
 			
 			v2.PUT("/users", users.UsersUpdate_2)
 			
@@ -99,7 +99,11 @@ func main() {
 				
 			v1.POST("/twitter_auth", users.PostTwttrAuth)
 		}
-		
+		return r
+}
+	 
+func main() {
+	r := setupRouter()
 	r.Run(":9090")
 }	
 
