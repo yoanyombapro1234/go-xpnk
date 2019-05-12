@@ -47,6 +47,7 @@ func setupRouter() *gin.Engine {
 			v2.POST("/users", users.UsersNew_2)
 			v2.POST ("/users/authCheck", users.XPNKAuthCheck)
 			v2.POST ("users/saveSub", users.SaveSub)
+			v2.POST ("users/firebase/:id/:key", users.SaveFireBaseKey)
 			
 			v2.PUT("/users", users.UsersUpdate_2)
 			

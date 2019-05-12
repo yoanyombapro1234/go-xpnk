@@ -4,6 +4,8 @@ type UserSub struct {
 	Id						int				`db:"user_ID"		json:"Id"`
 	Endpoint				string			`db:"endpoint"		json:"Endpoint"`
 	Type					int				`db:"type"			json:"Type"`
-	P256dh					string			`db:"p256dh"		json:"P256dh""`
+	P256dh					string			`db:"p256dh"		json:"P256dh"`
 	Auth					string			`db:"auth"			json:"Auth"`
+	Zone					int				`db:"zone"			json:"Zone"`
+	FirebaseKey				string			`db:"firebase_key"`
 }
