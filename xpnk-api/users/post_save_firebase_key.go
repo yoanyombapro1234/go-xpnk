@@ -2,31 +2,35 @@ package users
 
 import (
 	"fmt"
+	"strconv"
 	 _ "github.com/go-sql-driver/mysql"
 	 "github.com/gin-gonic/gin"
 	 "xpnk-user/xpnk_user_structs"
 	 "xpnk-shared/db_connect"
 )
 
-func SaveSub (c *gin.Context) {
+func SaveFireBaseKey (c *gin.Context) {
 	var newSub					xpnk_user_structs.UserSub
 	var err_msg					error
-	c.Bind(&newSub)
-	fmt.Printf("newSub to add:  %+v \n", newSub)
-	if newSub.Id < 1 || newSub.Endpoint == "" || newSub.Type < 1 || newSub.P256dh == "" || newSub.Auth == "" || newSub.Zone < 1 {
-		c.JSON(400, "All fields must have a value - Id, Endpoint, Type, P256dh, Auth, Zone. One or more is empty.")
+	user_id						:= c.Params.ByName("id")
+	user_id_string, err			:= strconv.Atoi(user_id)
+	newSub.Id					= user_id_string	
+	newSub.FirebaseKey			=	c.Params.ByName("key")
+	newSub.Type					= 2
+	if newSub.Id < 1 || err != nil || newSub.FirebaseKey == "" {
+		c.JSON(400, "Missing either the user id or the Firebase key, or both.")
 		return
 	}
 	
-	subAdded, err_msg 			:=  insertSub(newSub)
+	keyAdded, err_msg 			:=  insertFireBaseKey(newSub)
 	if err_msg != nil {
 		c.JSON(400, err_msg.Error())	
 	} else {
-		c.JSON(200, subAdded)
+		c.JSON(200, keyAdded)
 	}
 }
 
-func insertSub (sub xpnk_user_structs.UserSub) (int, error) {
+func insertFireBaseKey (sub xpnk_user_structs.UserSub) (int, error) {
 	dbmap 					:= db_connect.InitDb()
 	defer dbmap.Db.Close()
 	
